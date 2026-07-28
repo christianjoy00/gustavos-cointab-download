@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>Gustavo's Cointab Monitoring Dashboard</title>
+  <style>
+    :root{color-scheme:dark;background:#06101e;font-family:Arial,sans-serif}
+    *{box-sizing:border-box}
+    html,body,#dashboard{width:100%;height:100%;margin:0}
+    body{overflow:hidden;background:radial-gradient(circle at top,#102345 0,#06101e 52%)}
+    #dashboard{display:none;border:0;background:#06101e}
+    #status{height:100%;display:grid;place-items:center;padding:24px;color:#eaf2ff}
+    .card{width:min(560px,100%);padding:32px;border:1px solid #2563eb;border-radius:24px;
+      background:#0d1a2d;box-shadow:0 24px 80px #0008;text-align:center}
+    h1{margin:0 0 10px;color:#38bdf8;font-size:clamp(24px,5vw,36px)}
+    p{margin:8px 0;color:#9fb2cf;line-height:1.55}
+    .error{color:#ff6262}
+  </style>
+</head>
+<body>
+  <main id="status">
+    <section class="card">
+      <h1>GUSTAVO'S COINTAB</h1>
+      <p id="message">Opening your secure monitoring dashboard...</p>
+    </section>
+  </main>
+  <iframe id="dashboard" title="Gustavo's Cointab Monitoring Dashboard"
+    referrerpolicy="no-referrer" allow="fullscreen"></iframe>
+  <script>
+    (() => {
+      const endpoint =
+        "https://script.google.com/macros/s/AKfycbz8lhkHccW97QBvEYJ21P8ZndWWjwdtTxDN-p2loJ9wF2XHDzUH2waAqpNGt6Yqs9-n6Q/exec";
+      const access = new URLSearchParams(location.search).get("access") || "";
+      const message = document.getElementById("message");
+      const frame = document.getElementById("dashboard");
+      const status = document.getElementById("status");
+      if (!/^[A-Za-z0-9_-]{20,200}$/.test(access)) {
+        message.textContent = "This dashboard link is missing or invalid. Send the dashboard link again from Launcher Admin Settings.";
+        message.className = "error";
+        return;
+      }
+      frame.src = endpoint + "?page=dashboard&access=" + encodeURIComponent(access);
+      frame.addEventListener("load", () => {
+        status.style.display = "none";
+        frame.style.display = "block";
+      }, {once:true});
+      setTimeout(() => {
+        if (frame.style.display !== "block") {
+          message.textContent = "The secure dashboard is taking longer than expected. Check the Internet connection and reload this page.";
+          message.className = "error";
+        }
+      }, 15000);
+    })();
+  </script>
+</body>
+</html>
