@@ -36,12 +36,12 @@
       const message = document.getElementById("message");
       const frame = document.getElementById("dashboard");
       const status = document.getElementById("status");
-      if (!/^[A-Za-z0-9_-]{20,200}$/.test(access)) {
-        message.textContent = "This dashboard link is missing or invalid. Send the dashboard link again from Launcher Admin Settings.";
+      if (access && !/^[A-Za-z0-9_-]{20,200}$/.test(access)) {
+        message.textContent = "This dashboard link is invalid. Open the normal dashboard address and sign in using the registered Gmail and current Administrator PIN.";
         message.className = "error";
         return;
       }
-      frame.src = endpoint + "?page=dashboard&access=" + encodeURIComponent(access);
+      frame.src = endpoint + "?page=dashboard" + (access ? "&access=" + encodeURIComponent(access) : "");
       frame.addEventListener("load", () => {
         status.style.display = "none";
         frame.style.display = "block";
