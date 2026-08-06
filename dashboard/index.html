@@ -1,58 +1,20 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="color-scheme" content="dark">
-  <title>Gustavo's Cointab Monitoring Dashboard</title>
-  <style>
-    :root{color-scheme:dark;background:#06101e;font-family:Arial,sans-serif}
-    *{box-sizing:border-box}
-    html,body,#dashboard{width:100%;height:100%;margin:0}
-    body{overflow:hidden;background:radial-gradient(circle at top,#102345 0,#06101e 52%)}
-    #dashboard{display:none;border:0;background:#06101e}
-    #status{height:100%;display:grid;place-items:center;padding:24px;color:#eaf2ff}
-    .card{width:min(560px,100%);padding:32px;border:1px solid #2563eb;border-radius:24px;
-      background:#0d1a2d;box-shadow:0 24px 80px #0008;text-align:center}
-    h1{margin:0 0 10px;color:#38bdf8;font-size:clamp(24px,5vw,36px)}
-    p{margin:8px 0;color:#9fb2cf;line-height:1.55}
-    .error{color:#ff6262}
-  </style>
-</head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07111f"><title>Gustavo's Cointab Dashboard</title><link rel="stylesheet" href="styles.css"></head>
 <body>
-  <main id="status">
-    <section class="card">
-      <h1>GUSTAVO'S COINTAB</h1>
-      <p id="message">Opening your secure monitoring dashboard...</p>
+<section id="login" class="login-screen"><form id="login-form" class="login-card"><div class="brand-mark">◉</div><h1>GUSTAVO'S COINTAB</h1><p>PRIVATE MONITORING DASHBOARD</p><div id="login-message" class="message">Enter the registered Gmail and Administrator PIN.</div><label>Registered Gmail<input id="email" type="email" autocomplete="username" required placeholder="customer@gmail.com"></label><label>Administrator PIN<input id="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="8" required placeholder="Current launcher PIN"></label><button type="submit">CONTINUE SECURE LOGIN</button></form></section>
+<div id="app" class="shell hidden">
+  <aside><div class="brand"><b>GUSTAVO'S<br>COINTAB</b><small>MONITORING CONTROL CENTER</small></div><span id="server-pill" class="pill good">● SERVER ONLINE</span><nav><button data-page="dashboard" class="active">◉ Dashboard</button><button data-page="admin">⚙ Admin Settings</button><button data-page="licenses">▦ Manage Licenses</button></nav><button id="logout" class="logout">SIGN OUT</button></aside>
+  <main><header><div><h1 id="page-title">Monitoring Dashboard</h1><p id="page-subtitle">All registered locations and tablets</p></div><div class="header-actions"><span id="online-pill" class="pill good">● SERVER ONLINE</span><button id="refresh" class="secondary">REFRESH</button><button id="admin-shortcut">ADMIN</button></div></header>
+    <section id="dashboard-page" class="page active"><div id="summary-cards" class="summary"></div><div id="locations"></div></section>
+    <section id="admin-page" class="page"><div class="panel"><h2>Fleet Admin Settings</h2><p>Apply commands to one tablet, one location, or all registered tablets. Commands are queued safely if a tablet is temporarily offline.</p><div class="form-grid"><label>Target Location<select id="admin-location"></select></label><label>Target Tablet<select id="admin-tablet"></select></label></div></div>
+      <div class="panel danger-panel"><h2>Harvest / Sales Reset</h2><p>Reset Today, This Week, This Month and All-Time dashboard sales for the selected target.</p><button id="reset-sales" class="danger">RESET SELECTED SALES</button></div>
+      <div class="panel"><h2>Launcher & Appearance</h2><div class="form-grid"><label>Launcher Theme<select id="theme"><option value="0">Midnight Blue</option><option value="1">Midnight Purple</option><option value="2">Emerald Grid</option><option value="3" selected>Crimson Carbon</option><option value="4">Electric Cyan</option><option value="5">Royal Gold</option><option value="6">Violet Strike</option><option value="7">Steel Tactical</option><option value="8">Ocean Neon</option><option value="9">Forest Ops</option></select></label><label class="check"><input id="categories" type="checkbox" checked> Organize Launcher Into Download Games Categories</label><label class="check"><input id="daily-theme" type="checkbox" checked> Automatically Change Theme Every Day</label></div><div class="button-row"><button id="apply-theme">APPLY APPEARANCE</button><button id="update-launcher">UPDATE LAUNCHER</button></div></div>
+      <div class="panel"><h2>Network Protection</h2><div class="form-grid"><label class="check"><input id="adult" type="checkbox" checked> Block Known Adult Sites</label><label class="check"><input id="ads" type="checkbox" checked> Block Known Ad Domains</label><label class="check"><input id="vpn" type="checkbox"> Show VPN On Launcher</label><label>Protected Google Account<input id="protected-email" type="email" placeholder="mainplaystore@gmail.com"></label></div><button id="apply-network">APPLY NETWORK SETTINGS</button></div>
+      <div class="panel"><h2>Play Store App Deployment</h2><p>Load apps from a source tablet, then install, update, uninstall, or stop maintenance on the selected target.</p><div class="form-grid"><label>Source Tablet<select id="source-tablet"></select></label><label>Optional Package<input id="package" placeholder="com.example.game"></label></div><div class="button-row"><button id="load-apps" class="secondary">LOAD SOURCE TABLET APPS</button><button id="select-all" class="secondary">SELECT ALL</button></div><div id="source-apps" class="app-list"><p>Load a source tablet to choose apps.</p></div><div class="button-row"><button id="install-apps">INSTALL SELECTED APPS</button><button id="update-apps">UPDATE SELECTED APPS</button><button id="uninstall-apps" class="danger">UNINSTALL SELECTED APPS</button><button id="stop-apps" class="danger">STOP INSTALL / UPDATE</button></div></div>
+      <div class="panel"><h2>Dashboard Access</h2><div class="button-row"><button id="email-link">EMAIL DASHBOARD LINK</button><button id="copy-link" class="secondary">COPY PERMANENT LINK</button></div></div>
     </section>
+    <section id="licenses-page" class="page"><div class="panel"><div class="panel-head"><div><h2>Manage Licenses</h2><p>Available, active, expired, revoked and transferred licenses.</p></div><input id="license-search" placeholder="Search license, Gmail, location or device"></div><div id="license-list" class="license-list"></div></div><div class="panel"><h2>License History</h2><div id="license-history" class="history"></div></div></section>
   </main>
-  <iframe id="dashboard" title="Gustavo's Cointab Monitoring Dashboard"
-    referrerpolicy="no-referrer" allow="fullscreen"></iframe>
-  <script>
-    (() => {
-      const endpoint =
-        "https://script.google.com/macros/s/AKfycbz8lhkHccW97QBvEYJ21P8ZndWWjwdtTxDN-p2loJ9wF2XHDzUH2waAqpNGt6Yqs9-n6Q/exec";
-      const access = new URLSearchParams(location.search).get("access") || "";
-      const message = document.getElementById("message");
-      const frame = document.getElementById("dashboard");
-      const status = document.getElementById("status");
-      if (access && !/^[A-Za-z0-9_-]{20,200}$/.test(access)) {
-        message.textContent = "This dashboard link is invalid. Open the normal dashboard address and sign in using the registered Gmail and current Administrator PIN.";
-        message.className = "error";
-        return;
-      }
-      frame.src = endpoint + "?page=dashboard" + (access ? "&access=" + encodeURIComponent(access) : "");
-      frame.addEventListener("load", () => {
-        status.style.display = "none";
-        frame.style.display = "block";
-      }, {once:true});
-      setTimeout(() => {
-        if (frame.style.display !== "block") {
-          message.textContent = "The secure dashboard is taking longer than expected. Check the Internet connection and reload this page.";
-          message.className = "error";
-        }
-      }, 15000);
-    })();
-  </script>
-</body>
-</html>
+</div>
+<div id="modal" class="modal hidden"><div class="modal-card"><button id="modal-close" class="modal-close">×</button><div id="modal-content"></div></div></div><div id="toast"></div>
+<script src="config.js"></script><script src="api-client.js"></script><script src="app.js"></script></body></html>
