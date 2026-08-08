@@ -1,0 +1,18 @@
+GUSTAVO'S COINTAB DASHBOARD v6.0.4c — COMPACT WORKING BUILD
+
+This build keeps the working v6.0.4 API connection and proxy code.
+Only the visual layout was compacted.
+
+CPANEL / RENTARIDE.TOP
+1. Back up the current dashboard files.
+2. Upload and extract every file from this ZIP into the document root used by https://rentaride.top/.
+3. Keep api-proxy.php and .htaccess.
+4. Delete or overwrite the older app.js, api-client.js, config.js, styles.css and index.html.
+5. Clear browser site data or test in an InPrivate window.
+
+GITHUB PAGES
+Upload index.html, styles.css, app.js, api-client.js and config.js.
+api-proxy.php is ignored by GitHub Pages.
+
+IMPORTANT
+Do not install the v6.0.7 dashboard over this build. v6.0.4c intentionally retains v6.0.4 networking because it was confirmed working on your hosting.
