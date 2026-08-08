@@ -11,6 +11,6 @@
     baseUrl: 'https://api.rentaride.top/api/v1',
     proxyUrl: isGitHubPages ? '' : new URL('api-proxy.php', location.href).href,
     requestTimeoutMs: 25000,
-    latestLauncherVersion: 'V6.0.0'
+    latestLauncherVersion: 'V6.0.8'
   };
 })();

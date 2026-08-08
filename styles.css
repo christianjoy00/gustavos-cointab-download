@@ -909,3 +909,13 @@ header button{padding:13px 18px}
   line-height:inherit !important;
   white-space:nowrap;
 }
+
+/* v6.0.8 live remote control */
+.remote-live-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.remote-live-head h2{margin:0 0 6px}.remote-live-state{font-weight:900;font-size:13px;letter-spacing:.4px}.remote-frame-age{color:var(--muted);font-weight:800}
+.remote-help{margin:12px 0 16px}.remote-live-layout{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:16px;align-items:start}
+.remote-screen-shell{position:relative;display:grid;place-items:center;min-height:420px;max-height:72vh;background:#000;border:2px solid #315bf4;border-radius:18px;overflow:hidden;touch-action:none;user-select:none}
+.remote-live-img{display:block;width:100%;height:100%;max-height:72vh;object-fit:contain;cursor:crosshair;touch-action:none;user-select:none;-webkit-user-drag:none}
+.remote-touch-note{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);background:#07111fcc;border:1px solid #38bdf8;color:#9ddcff;border-radius:999px;padding:5px 10px;font-size:11px;font-weight:900;pointer-events:none;white-space:nowrap}
+.remote-side-controls{display:grid;gap:10px;position:sticky;top:0}.remote-side-controls button{width:100%}
+@media(max-width:760px){.remote-live-layout{grid-template-columns:1fr}.remote-side-controls{grid-template-columns:repeat(2,1fr);position:static}.remote-screen-shell{min-height:300px;max-height:62vh}.remote-live-img{max-height:62vh}}

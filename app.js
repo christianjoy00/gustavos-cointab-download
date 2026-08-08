@@ -231,15 +231,73 @@ async function refresh(){
   }
 }
 function modal(html){$('#modal-content').innerHTML=html;$('#modal').classList.remove('hidden');}
-function closeModal(){$('#modal').classList.add('hidden');$('#modal-content').innerHTML='';}
-function bindTabletButtons(){$$('[data-preview]').forEach(el=>el.onclick=()=>{const t=state.tablets.find(x=>x.id==el.dataset.preview);if(t?.preview)modal(`<h2>${esc(t.device)} — SCREEN PREVIEW</h2><img src="${esc(t.preview)}" style="width:100%;max-height:75vh;object-fit:contain;background:#000">`);});$$('[data-remote]').forEach(el=>el.onclick=()=>remoteModal(Number(el.dataset.remote)));$$('[data-settings]').forEach(el=>el.onclick=()=>settingsModal(Number(el.dataset.settings)));}
+function closeModal(){stopRemoteSession();$('#modal').classList.add('hidden');$('#modal-content').innerHTML='';}
+function bindTabletButtons(){$$('[data-preview]').forEach(el=>el.onclick=()=>remoteModal(Number(el.dataset.preview)));$$('[data-remote]').forEach(el=>el.onclick=()=>remoteModal(Number(el.dataset.remote)));$$('[data-settings]').forEach(el=>el.onclick=()=>settingsModal(Number(el.dataset.settings)));}
 function bindLocationUpdateButtons(){
   $$('[data-location-update-apps]').forEach(button=>button.onclick=()=>busy(button,async()=>{const location=button.dataset.locationUpdateApps;if(!confirm('Update ALL Play Store apps on every tablet at '+location+'?'))return;await CoinTabApi.command('UPDATE_APPS',{location},{all:true});toast('All-app update queued for '+location);}));
   $$('[data-location-update-launchers]').forEach(button=>button.onclick=()=>busy(button,async()=>{const location=button.dataset.locationUpdateLaunchers;if(!confirm('Update the launcher on every tablet at '+location+'?'))return;await CoinTabApi.command('UPDATE_LAUNCHER',{location},{});toast('Launcher update queued for every tablet at '+location);}));
   $$('[data-location-sync-apps]').forEach(button=>button.onclick=()=>busy(button,async()=>{const location=button.dataset.locationSyncApps;if(!confirm('Match the installed apps for every tablet at '+location+' using the tablet with the largest app list as the reference?\n\nOnly missing apps will be installed.'))return;await syncLocationApps(location,button);}));
   $$('[data-location-uninstall-apps]').forEach(button=>button.onclick=()=>{const location=button.dataset.locationUninstallApps;try{locationUninstallAppsModal(location);}catch(e){toast(e.message||String(e),true);}});
 }
-function remoteModal(id){const t=state.tablets.find(x=>x.id===id);modal(`<h2>${esc(t.device)} — REMOTE CONTROL</h2><p>Commands are queued and applied when the licensed tablet is online. Reboot and power lock require Device Owner.</p><div class="remote-grid"><button data-cmd="SCREEN_ON">TURN SCREEN ON</button><button data-cmd="BACK">BACK</button><button data-cmd="HOME">HOME</button><button data-cmd="RECENTS">RECENTS</button><button data-cmd="OPEN_WIFI">OPEN WI-FI</button><button data-cmd="POWER" class="danger">POWER / LOCK</button><button data-cmd="REBOOT" class="danger">REBOOT DEVICE</button></div><textarea id="remote-message" class="remote-message" placeholder="Message to display on the tablet"></textarea><button id="send-message">SEND MESSAGE</button>`);$$('[data-cmd]').forEach(button=>button.onclick=()=>busy(button,async()=>{await CoinTabApi.command(button.dataset.cmd,{tabletId:id},{});toast(button.dataset.cmd+' queued');closeModal();}));$('#send-message').onclick=()=>busy($('#send-message'),async()=>{const message=$('#remote-message').value.trim();if(!message)throw new Error('Enter a message first.');await CoinTabApi.command('MESSAGE',{tabletId:id},{message});toast('Message queued');closeModal();});}
+let remoteSession=null,remoteRefreshTimer=null,remotePointer=null;
+function stopRemoteSession(){
+  if(remoteRefreshTimer){clearInterval(remoteRefreshTimer);remoteRefreshTimer=null;}
+  const session=remoteSession;remoteSession=null;remotePointer=null;
+  if(session?.id)CoinTabApi.command('APPLY_SETTINGS',{tabletId:session.id},{settings:{screenMonitorRemoteInterval:15}}).catch(()=>{});
+}
+function remoteImagePoint(img,event){
+  const rect=img.getBoundingClientRect(),nw=img.naturalWidth||rect.width,nh=img.naturalHeight||rect.height;
+  if(!rect.width||!rect.height||!nw||!nh)return null;
+  const scale=Math.min(rect.width/nw,rect.height/nh),dw=nw*scale,dh=nh*scale;
+  const left=rect.left+(rect.width-dw)/2,top=rect.top+(rect.height-dh)/2;
+  const px=event.clientX-left,py=event.clientY-top;
+  if(px<0||py<0||px>dw||py>dh)return null;
+  return{x:Math.max(0,Math.min(1,px/dw)),y:Math.max(0,Math.min(1,py/dh))};
+}
+async function remoteSend(type,payload={}){
+  if(!remoteSession)return;
+  await CoinTabApi.command(type,{tabletId:remoteSession.id},payload);
+}
+async function refreshRemoteScreen(){
+  if(!remoteSession)return;
+  try{
+    const data=await CoinTabApi.summary(),latest=(data.tablets||[]).find(x=>Number(x.id)===remoteSession.id);
+    if(!latest)return;
+    const img=$('#remote-live-img'),stateText=$('#remote-live-state'),frameText=$('#remote-frame-age');
+    if(img&&latest.preview&&img.src!==latest.preview)img.src=latest.preview;
+    if(stateText){stateText.textContent=latest.online?'REMOTE CONTROL: CONNECTED':'REMOTE CONTROL: TABLET OFFLINE';stateText.className='remote-live-state '+(latest.online?'online':'offline');}
+    if(frameText)frameText.textContent='Frame: '+ago(latest.previewAt);
+  }catch(error){const stateText=$('#remote-live-state');if(stateText){stateText.textContent='REMOTE CONTROL: REFRESH RETRYING';stateText.className='remote-live-state offline';}}
+}
+function remoteModal(id){
+  const t=state.tablets.find(x=>Number(x.id)===Number(id));if(!t)return;
+  stopRemoteSession();remoteSession={id:Number(id)};
+  modal(`<div class="remote-live-head"><div><h2>${esc(t.device)} — LIVE REMOTE CONTROL</h2><div id="remote-live-state" class="remote-live-state ${t.online?'online':'offline'}">${t.online?'REMOTE CONTROL: CONNECTED':'REMOTE CONTROL: TABLET OFFLINE'}</div></div><div id="remote-frame-age" class="remote-frame-age">Frame: ${esc(ago(t.previewAt))}</div></div>
+    <p class="remote-help">Click the live tablet screen to TAP. Drag on it to SWIPE. Coordinates are mapped to the tablet screen automatically.</p>
+    <div class="remote-live-layout">
+      <div class="remote-screen-shell"><img id="remote-live-img" class="remote-live-img" src="${esc(t.preview||'')}" draggable="false" alt="Live tablet screen"><div class="remote-touch-note">CLICK / DRAG DIRECTLY ON SCREEN</div></div>
+      <div class="remote-side-controls">
+        <button data-live-cmd="SCREEN_ON">SCREEN ON</button>
+        <button data-live-cmd="BACK">BACK</button>
+        <button data-live-cmd="HOME">HOME</button>
+        <button data-live-cmd="RECENTS">RECENTS</button>
+        <button id="remote-refresh-now" class="secondary">REFRESH NOW</button>
+        <button data-live-cmd="POWER" class="danger">LOCK SCREEN</button>
+      </div>
+    </div>
+    <textarea id="remote-message" class="remote-message" placeholder="Message to display on the tablet"></textarea><button id="send-message">SEND MESSAGE</button>`);
+  CoinTabApi.command('APPLY_SETTINGS',{tabletId:id},{settings:{screenMonitorRemoteInterval:1}}).catch(()=>{});
+  const img=$('#remote-live-img');
+  if(img){
+    img.onpointerdown=e=>{const p=remoteImagePoint(img,e);if(!p)return;e.preventDefault();remotePointer={...p,time:Date.now(),pointerId:e.pointerId};try{img.setPointerCapture(e.pointerId);}catch(_){}}; 
+    img.onpointerup=async e=>{if(!remotePointer)return;const start={...remotePointer},finish=remoteImagePoint(img,e)||start;remotePointer=null;e.preventDefault();const dx=finish.x-start.x,dy=finish.y-start.y,distance=Math.hypot(dx,dy),duration=Math.max(40,Date.now()-start.time);try{if(distance<.018)await remoteSend('TAP',{x:start.x,y:start.y,durationMs:Math.min(180,duration)});else await remoteSend('SWIPE',{x:start.x,y:start.y,x2:finish.x,y2:finish.y,durationMs:Math.max(160,Math.min(1200,duration))});toast(distance<.018?'Tap sent':'Swipe sent');setTimeout(refreshRemoteScreen,350);}catch(error){toast(error.message||'Remote command failed',true);}};
+    img.onpointercancel=()=>{remotePointer=null;};
+  }
+  $$('[data-live-cmd]').forEach(button=>button.onclick=()=>busy(button,async()=>{await remoteSend(button.dataset.liveCmd,{});toast(button.dataset.liveCmd+' queued');setTimeout(refreshRemoteScreen,350);}));
+  $('#remote-refresh-now').onclick=()=>refreshRemoteScreen();
+  $('#send-message').onclick=()=>busy($('#send-message'),async()=>{const message=$('#remote-message').value.trim();if(!message)throw new Error('Enter a message first.');await remoteSend('MESSAGE',{message});toast('Message queued');});
+  remoteRefreshTimer=setInterval(refreshRemoteScreen,1000);refreshRemoteScreen();
+}
 function settingsModal(id){
   const t=state.tablets.find(x=>x.id===id),s=t.settings||{},apps=Array.isArray(t.apps)?t.apps:[];
   const themes=['Midnight Blue','Neon Arcade','Emerald Matrix','Crimson Carbon','Royal Gold','Ocean Cyan','Violet Storm','Sunset Orange','Ice Silver','Rose Neon'];
