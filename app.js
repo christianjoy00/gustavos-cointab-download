@@ -255,8 +255,10 @@ function remoteImagePoint(img,event){
   return{x:Math.max(0,Math.min(1,px/dw)),y:Math.max(0,Math.min(1,py/dh))};
 }
 async function remoteSend(type,payload={}){
-  if(!remoteSession)return;
-  await CoinTabApi.command(type,{tabletId:remoteSession.id},payload);
+  if(!remoteSession)throw new Error('Remote session is not open.');
+  const result=await CoinTabApi.command(type,{tabletId:remoteSession.id},payload);
+  if(result&&Number(result.queued)===0)throw new Error('Tablet command was not queued. Refresh the dashboard and try again.');
+  return result;
 }
 async function refreshRemoteScreen(){
   if(!remoteSession)return;
