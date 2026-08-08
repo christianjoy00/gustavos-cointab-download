@@ -1,0 +1,11 @@
+GUSTAVO'S COINTAB DASHBOARD v6.0.4j
+
+INSTALLED APP COUNT
+- Tablet Admin Settings now shows the app count beside the connection badge.
+- Examples:
+    ONLINE · 47 APPS
+    OFFLINE · 12 APPS
+    ONLINE · 1 APP
+- Count comes from the tablet's reported installed-app list.
+- Reload Tablet Data if the count is outdated.
+- All existing v6.0.4i functions remain unchanged.
