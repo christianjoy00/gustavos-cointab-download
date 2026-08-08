@@ -76,6 +76,21 @@ function formatAppSize(bytes){
   const digits=i>=3?2:i>=2?1:0;
   return `${n.toFixed(digits)} ${units[i]}`;
 }
+function appUsageMs(app){
+  if(!app||typeof app!=='object')return 0;
+  const value=Number(app.usageMs??app.totalForegroundMs??app.usageTimeMs??0);
+  return Number.isFinite(value)&&value>0?value:0;
+}
+function formatAppUsage(ms){
+  const value=Math.max(0,Number(ms)||0);
+  if(value<60000)return value>0?'< 1m':'NEVER';
+  const minutes=Math.floor(value/60000);
+  if(minutes<60)return `${minutes}m`;
+  const hours=Math.floor(minutes/60),remain=minutes%60;
+  if(hours<24)return remain?`${hours}h ${remain}m`:`${hours}h`;
+  const days=Math.floor(hours/24),hourRemain=hours%24;
+  return hourRemain?`${days}d ${hourRemain}h`:`${days}d`;
+}
 
 function syncableLocationApps(tablet){
   const apps=Array.isArray(tablet?.apps)?tablet.apps:[];
@@ -90,7 +105,9 @@ function syncableLocationApps(tablet){
       package:pkg,
       label:String(app?.label||app?.name||pkg),
       icon:String(app?.icon||''),
-      sizeBytes:appSizeBytes(app)
+      sizeBytes:appSizeBytes(app),
+      usageMs:appUsageMs(app),
+      lastUsedAt:Number(app?.lastUsedAt)||0
     });
   });
   return result;
@@ -126,12 +143,16 @@ function locationSyncAppCatalog(location){
   const combined=new Map();
   ranked.forEach(item=>item.apps.forEach((a,pkg)=>{
     const existing=combined.get(pkg);
-    if(!existing)combined.set(pkg,{...a});
-    else if((Number(a.sizeBytes)||0)>(Number(existing.sizeBytes)||0))existing.sizeBytes=Number(a.sizeBytes)||0;
+    if(!existing)combined.set(pkg,{...a,usageMs:Number(a.usageMs)||0,lastUsedAt:Number(a.lastUsedAt)||0});
+    else{
+      if((Number(a.sizeBytes)||0)>(Number(existing.sizeBytes)||0))existing.sizeBytes=Number(a.sizeBytes)||0;
+      existing.usageMs=(Number(existing.usageMs)||0)+(Number(a.usageMs)||0);
+      existing.lastUsedAt=Math.max(Number(existing.lastUsedAt)||0,Number(a.lastUsedAt)||0);
+    }
   }));
   const apps=reference?[...reference.apps.values()].map(a=>{
     const merged=combined.get(a.package)||a;
-    return {...a,sizeBytes:Number(merged.sizeBytes)||Number(a.sizeBytes)||0};
+    return {...a,sizeBytes:Number(merged.sizeBytes)||Number(a.sizeBytes)||0,usageMs:Number(merged.usageMs)||0,lastUsedAt:Number(merged.lastUsedAt)||0};
   }).sort((a,b)=>String(a.label||a.package).localeCompare(String(b.label||b.package),undefined,{sensitivity:'base',numeric:true})):[];
   return {tablets,reference,apps};
 }
@@ -145,6 +166,14 @@ function locationUninstallAppsModal(location){
     <section class="admin-section">
       <div class="app-picker-toolbar">
         <input id="location-uninstall-search" type="search" autocomplete="off" placeholder="Search app name or package">
+        <select id="location-uninstall-sort" class="app-sort-select" aria-label="Sort apps">
+          <option value="name-asc">NAME A-Z</option>
+          <option value="name-desc">NAME Z-A</option>
+          <option value="size-desc">SIZE: LARGEST</option>
+          <option value="size-asc">SIZE: SMALLEST</option>
+          <option value="usage-desc">USAGE: MOST USED</option>
+          <option value="usage-asc">USAGE: LEAST USED</option>
+        </select>
         <span id="location-uninstall-count" class="total-apps-badge">SELECTED: 0 · SYNC APPS: ${apps.length}</span>
       </div>
       <p class="muted">SYNC SOURCE: ${esc(referenceName)} · ${apps.length} APPS · TARGET: ${catalog.tablets.length} TABLET${catalog.tablets.length===1?'':'S'}</p>
@@ -159,14 +188,22 @@ function locationUninstallAppsModal(location){
   const updateCount=()=>{$('#location-uninstall-count').textContent=`SELECTED: ${selected.size} · SYNC APPS: ${apps.length}`;};
   const render=()=>{
     const query=$('#location-uninstall-search').value.trim().toLowerCase();
-    const visible=apps.filter(a=>(String(a.label||a.package||'')+' '+String(a.package||'')).toLowerCase().includes(query));
+    const sort=$('#location-uninstall-sort').value;
+    const visible=apps.filter(a=>(String(a.label||a.package||'')+' '+String(a.package||'')).toLowerCase().includes(query)).slice();
+    const nameCompare=(a,b)=>String(a.label||a.package).localeCompare(String(b.label||b.package),undefined,{sensitivity:'base',numeric:true});
+    if(sort==='name-desc')visible.sort((a,b)=>-nameCompare(a,b));
+    else if(sort==='size-desc')visible.sort((a,b)=>(Number(b.sizeBytes)||0)-(Number(a.sizeBytes)||0)||nameCompare(a,b));
+    else if(sort==='size-asc')visible.sort((a,b)=>(Number(a.sizeBytes)||0)-(Number(b.sizeBytes)||0)||nameCompare(a,b));
+    else if(sort==='usage-desc')visible.sort((a,b)=>(Number(b.usageMs)||0)-(Number(a.usageMs)||0)||nameCompare(a,b));
+    else if(sort==='usage-asc')visible.sort((a,b)=>(Number(a.usageMs)||0)-(Number(b.usageMs)||0)||nameCompare(a,b));
+    else visible.sort(nameCompare);
     $('#location-uninstall-list').innerHTML=visible.map(a=>`<label class="app-item">
       <input type="checkbox" data-location-uninstall-package="${esc(a.package)}" ${selected.has(a.package)?'checked':''}>
       <span class="app-item-copy">
         <b>${esc(a.label||a.package)}</b>
         <small>${esc(a.package)}</small>
       </span>
-      <strong class="app-size">${esc(formatAppSize(a.sizeBytes))}</strong>
+      <span class="app-metrics"><strong class="app-size">${esc(formatAppSize(a.sizeBytes))}</strong><small class="app-usage">USAGE: ${esc(formatAppUsage(a.usageMs))}</small></span>
     </label>`).join('')||'<p>No matching apps.</p>';
     $$('[data-location-uninstall-package]').forEach(box=>box.onchange=()=>{
       if(box.checked)selected.add(box.dataset.locationUninstallPackage);else selected.delete(box.dataset.locationUninstallPackage);
@@ -174,6 +211,7 @@ function locationUninstallAppsModal(location){
     });
   };
   $('#location-uninstall-search').oninput=render;
+  $('#location-uninstall-sort').onchange=render;
   $('#location-uninstall-select-all').onclick=()=>{apps.forEach(a=>selected.add(a.package));render();updateCount();};
   $('#location-uninstall-clear').onclick=()=>{selected.clear();render();updateCount();};
   $('#location-uninstall-confirm').onclick=()=>busy($('#location-uninstall-confirm'),async()=>{
