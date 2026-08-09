@@ -938,3 +938,18 @@ button:active{transform:translate(4px,4px)!important;box-shadow:inset 0 3px #000
 input,select,textarea{background:#10101c!important;color:var(--px-ink)!important;border:3px solid #000!important;font-family:'VT323',monospace!important;font-size:20px!important}
 .preview,.remote-screen-shell{position:relative;background:#000!important;border:4px solid #000!important}.preview:after,.remote-screen-shell:after{content:"";position:absolute;inset:0;pointer-events:none;z-index:4;background:repeating-linear-gradient(0deg,#00000020 0 1px,transparent 1px 4px)}
 .preview img,.remote-live-img{image-rendering:auto!important;filter:none!important;object-fit:contain!important}.status.online{color:var(--px-green)!important}.admin-section h3{color:var(--px-gold)!important}
+
+
+/* v6.0.11 clean theme matching Launcher Admin Settings */
+:root{--acct-bg:#140709;--acct-panel:#300d12;--acct-primary:#dc2626;--acct-accent:#fb923c;--acct-text:#fff7ed;--acct-muted:#fdba74}
+html,body{background:var(--acct-bg)!important;color:var(--acct-text)!important;font-family:Arial,Helvetica,sans-serif!important;font-size:16px!important}
+aside{background:color-mix(in srgb,var(--acct-bg) 82%,#000 18%)!important;border-right:1px solid color-mix(in srgb,var(--acct-muted) 30%,transparent)!important}
+.brand{background:transparent!important;margin:0 0 22px!important;padding:0!important;border:0!important;box-shadow:none!important}.brand b{font:700 24px Arial!important;color:var(--acct-accent)!important}
+header{background:color-mix(in srgb,var(--acct-bg) 74%,#000 26%)!important;border-bottom:1px solid color-mix(in srgb,var(--acct-muted) 22%,transparent)!important;box-shadow:none!important}
+header h1,h1,h2,h3,.location-title h2,.tablet-head h3{font-family:Arial,Helvetica,sans-serif!important;letter-spacing:0!important;text-shadow:none!important}
+.panel,.tablet-card,.stat,.modal-card,.admin-section{background:color-mix(in srgb,var(--acct-panel) 90%,#000 10%)!important;border:1px solid color-mix(in srgb,var(--acct-muted) 25%,transparent)!important;box-shadow:none!important;border-radius:14px!important}
+button{font-family:Arial,Helvetica,sans-serif!important;font-size:13px!important;font-weight:700!important;border:1px solid color-mix(in srgb,var(--acct-muted) 28%,transparent)!important;border-radius:10px!important;background:color-mix(in srgb,var(--acct-panel) 72%,#10121b 28%)!important;color:var(--acct-text)!important;box-shadow:none!important}
+button:hover{filter:brightness(1.12);transform:none!important}button:active{transform:scale(.98)!important}
+input,select,textarea{font-family:Arial,Helvetica,sans-serif!important;font-size:16px!important;background:color-mix(in srgb,var(--acct-panel) 65%,#090b10 35%)!important;color:var(--acct-text)!important;border:1px solid color-mix(in srgb,var(--acct-muted) 28%,transparent)!important;border-radius:8px!important;box-shadow:none!important}
+.admin-section h3{color:var(--acct-accent)!important;font-size:18px!important}.admin-dialog-head h2{font-size:24px!important}.preview:after,.remote-screen-shell:after{display:none!important}
+.preview img,.remote-live-img{image-rendering:auto!important;filter:none!important}.remote-screen-shell{border-radius:12px!important;box-shadow:none!important}
