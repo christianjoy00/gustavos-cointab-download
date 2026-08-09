@@ -1,0 +1,3 @@
+[PASS] Automatic update settings
+[PASS] Automatic restart settings
+[PASS] Readable animation/font dropdowns

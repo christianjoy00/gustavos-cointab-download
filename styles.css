@@ -953,3 +953,7 @@ button:hover{filter:brightness(1.12);transform:none!important}button:active{tran
 input,select,textarea{font-family:Arial,Helvetica,sans-serif!important;font-size:16px!important;background:color-mix(in srgb,var(--acct-panel) 65%,#090b10 35%)!important;color:var(--acct-text)!important;border:1px solid color-mix(in srgb,var(--acct-muted) 28%,transparent)!important;border-radius:8px!important;box-shadow:none!important}
 .admin-section h3{color:var(--acct-accent)!important;font-size:18px!important}.admin-dialog-head h2{font-size:24px!important}.preview:after,.remote-screen-shell:after{display:none!important}
 .preview img,.remote-live-img{image-rendering:auto!important;filter:none!important}.remote-screen-shell{border-radius:12px!important;box-shadow:none!important}
+
+/* v6.0.16 readable Appearance dropdowns */
+#m-lock-style,#m-lock-font{color:#fff!important;background:color-mix(in srgb,var(--acct-panel) 65%,#090b10 35%)!important}
+#m-lock-style option,#m-lock-font option{color:#111!important;background:#fff!important}
