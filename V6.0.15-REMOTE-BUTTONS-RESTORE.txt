@@ -1,0 +1,11 @@
+Dashboard remote controls restored:
+- SCREEN ON -> SCREEN_ON
+- SCREEN OFF -> POWER / Device Owner lockNow
+- BACK
+- HOME
+- RECENTS
+- REFRESH NOW
+- LOCK SCREEN -> POWER / Device Owner lockNow
+- REBOOT -> REBOOT / Device Owner reboot (confirmation required)
+
+No Launcher or API change is required because POWER and REBOOT are already supported by the current remote command backend.

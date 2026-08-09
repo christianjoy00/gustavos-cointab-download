@@ -322,11 +322,13 @@ function remoteModal(id){
       <div class="remote-screen-shell"><img id="remote-live-img" class="remote-live-img" src="${esc(t.preview||'')}" draggable="false" alt="Live tablet screen"><div class="remote-touch-note">CLICK / DRAG DIRECTLY ON SCREEN</div></div>
       <div class="remote-side-controls">
         <button data-live-cmd="SCREEN_ON">SCREEN ON</button>
+        <button data-live-cmd="POWER" class="danger">SCREEN OFF</button>
         <button data-live-cmd="BACK">BACK</button>
         <button data-live-cmd="HOME">HOME</button>
         <button data-live-cmd="RECENTS">RECENTS</button>
         <button id="remote-refresh-now" class="secondary">REFRESH NOW</button>
         <button data-live-cmd="POWER" class="danger">LOCK SCREEN</button>
+        <button data-live-cmd="REBOOT" data-live-confirm="Reboot this tablet now?" class="danger">REBOOT</button>
       </div>
     </div>
     <textarea id="remote-message" class="remote-message" placeholder="Message to display on the tablet"></textarea><button id="send-message">SEND MESSAGE</button>`);
@@ -337,7 +339,7 @@ function remoteModal(id){
     img.onpointerup=async e=>{if(!remotePointer)return;const start={...remotePointer},finish=remoteImagePoint(img,e)||start;remotePointer=null;e.preventDefault();const dx=finish.x-start.x,dy=finish.y-start.y,distance=Math.hypot(dx,dy),duration=Math.max(40,Date.now()-start.time);try{if(distance<.018)await remoteSend('TAP',{x:start.x,y:start.y,durationMs:Math.min(180,duration)});else await remoteSend('SWIPE',{x:start.x,y:start.y,x2:finish.x,y2:finish.y,durationMs:Math.max(160,Math.min(1200,duration))});toast(distance<.018?'Tap sent':'Swipe sent');setTimeout(refreshRemoteScreen,350);}catch(error){toast(error.message||'Remote command failed',true);}};
     img.onpointercancel=()=>{remotePointer=null;};
   }
-  $$('[data-live-cmd]').forEach(button=>button.onclick=()=>busy(button,async()=>{await remoteSend(button.dataset.liveCmd,{});toast(button.dataset.liveCmd+' queued');setTimeout(refreshRemoteScreen,350);}));
+  $$('[data-live-cmd]').forEach(button=>button.onclick=()=>{if(button.dataset.liveConfirm&&!confirm(button.dataset.liveConfirm))return;busy(button,async()=>{await remoteSend(button.dataset.liveCmd,{});toast(button.textContent.trim()+' queued');setTimeout(refreshRemoteScreen,350);});});
   $('#remote-refresh-now').onclick=()=>refreshRemoteScreen();
   $('#send-message').onclick=()=>busy($('#send-message'),async()=>{const message=$('#remote-message').value.trim();if(!message)throw new Error('Enter a message first.');await remoteSend('MESSAGE',{message});toast('Message queued');});
   remoteRefreshTimer=setInterval(refreshRemoteScreen,300);refreshRemoteScreen();
