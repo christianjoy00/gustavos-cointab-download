@@ -1,8 +1,0 @@
-GUSTAVO'S COINTAB DASHBOARD v6.0.4k
-
-TOTAL APPS DISPLAY
-- Online/offline status is shown separately.
-- Installed-app count now clearly displays as:
-    TOTAL APPS: 47
-- The total remains visible while the tablet is offline.
-- The count uses the tablet's last reported installed-app list.
