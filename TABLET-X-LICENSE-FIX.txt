@@ -1,0 +1,7 @@
+TABLET X + LICENSE FIX
+
+- Every tablet card now anchors its X/remove button to the tablet card itself.
+- X is visible at the top-right of every tablet card in every location.
+- Press X -> confirmation -> releases the tablet's current license/install assignment -> refresh removes it from dashboard.
+- Tablet Admin Settings shows Tablet License: license key, status, install ID, and location.
+- Asset cache version updated so GitHub Pages/browser loads the new JS/CSS instead of an older cached copy.

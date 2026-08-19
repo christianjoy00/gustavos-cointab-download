@@ -2,7 +2,7 @@
 setlocal EnableExtensions
 cd /d "%~dp0"
 echo ============================================================
-echo  GUSTAVO'S COINTAB DASHBOARD - PUBLISH TO GITHUB
+echo  GUSTAVO'S COINTAB - UPLOAD ALL PACKAGE FILES TO GITHUB
 echo ============================================================
 where gh >nul 2>nul
 if errorlevel 1 (
@@ -27,16 +27,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "gh repo clone christianjoy00/gustavos-cointab-download $tmp -- --depth 1 | Out-Host;" ^
   "$git=Join-Path $tmp '.git';" ^
   "Get-ChildItem -LiteralPath $tmp -Force | Where-Object {$_.Name -ne '.git'} | Remove-Item -Recurse -Force;" ^
-  "$exclude=@('.git','github-latest');" ^
-  "Get-ChildItem -LiteralPath $src -Force | Where-Object {$exclude -notcontains $_.Name} | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $tmp -Recurse -Force };" ^
+  "Write-Host 'Mirroring ALL files and folders from this package...' -ForegroundColor Cyan;" ^
+  "Get-ChildItem -LiteralPath $src -Force | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $tmp -Recurse -Force };" ^
   "Push-Location $tmp;" ^
   "git add -A;" ^
   "$changes=git status --porcelain;" ^
   "if(-not $changes){ Write-Host 'No dashboard changes to upload.' -ForegroundColor Yellow; Pop-Location; Remove-Item $tmp -Recurse -Force; exit 0 };" ^
-  "git -c user.name='Gustavos CoinTab Publisher' -c user.email='cointab-publisher@users.noreply.github.com' commit -m ('Dashboard update '+(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')) | Out-Host;" ^
+  "git -c user.name='Gustavos CoinTab Publisher' -c user.email='cointab-publisher@users.noreply.github.com' commit -m ('Full package update '+(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')) | Out-Host;" ^
   "git push origin HEAD:main | Out-Host;" ^
   "Pop-Location; Remove-Item $tmp -Recurse -Force;" ^
-  "Write-Host ''; Write-Host 'Dashboard uploaded to GitHub. GitHub Pages will update automatically.' -ForegroundColor Green"
+  "Write-Host ''; Write-Host 'ALL package files uploaded to GitHub. GitHub Pages will update automatically.' -ForegroundColor Green"
 if errorlevel 1 (
   echo.
   echo UPLOAD FAILED.

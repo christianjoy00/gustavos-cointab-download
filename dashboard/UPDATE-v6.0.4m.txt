@@ -1,0 +1,9 @@
+GUSTAVO'S COINTAB DASHBOARD v6.0.4m
+
+MANAGE LICENSES FILTER TABS
+- ALL LICENSES
+- AVAILABLE
+- USED
+- Each tab shows its current license count.
+- Search works inside the selected tab.
+- Existing revoke, restore and transfer functions are unchanged.
