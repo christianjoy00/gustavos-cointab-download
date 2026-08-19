@@ -203,7 +203,7 @@ function tabletCard(t){
   const battery=Math.max(0,Math.min(100,Number(t.battery||0)));
   const batteryClass=battery<=50?'battery-low':'battery-good';
   const totalApps=Array.isArray(t.apps)?t.apps.length:0;
-  return`<article class="tablet-card" data-tablet="${t.id}"><div class="preview" data-preview="${t.id}">${preview}</div><div class="tablet-body"><div class="tablet-head"><h3>${esc(t.device)}</h3><span class="status ${t.online?'online':'offline'}">${t.online?'ONLINE':'OFFLINE'}</span></div><div class="tablet-meta">${esc(mode(t.mode))}<br>Battery: <span class="battery-percent ${batteryClass}">${battery}%</span> · Last seen: ${esc(ago(t.lastSeen))}<br><span class="preview-apps-row"><span>Preview: ${esc(ago(t.previewAt))}</span><span class="card-app-count">Total apps: ${totalApps}</span></span><br><span class="launcher-version ${launcher.className}">${esc(launcher.label)}</span></div><div class="sales"><div class="sale"><small>TODAY</small>${money(t.sales?.today)}</div><div class="sale"><small>THIS WEEK</small>${money(t.sales?.week)}</div><div class="sale"><small>THIS MONTH</small>${money(t.sales?.month)}</div><div class="sale"><small>ALL-TIME</small>${money(t.sales?.allTime)}</div></div><div class="tablet-actions"><button data-remote="${t.id}">REMOTE CONTROL</button><button data-settings="${t.id}" class="secondary">ADMIN SETTINGS</button></div></div></article>`;}
+  return`<article class="tablet-card" data-tablet="${t.id}"><button class="tablet-remove" data-remove-tablet="${t.id}" type="button" title="Remove tablet" aria-label="Remove ${esc(t.device)}">×</button><div class="preview" data-preview="${t.id}">${preview}</div><div class="tablet-body"><div class="tablet-head"><h3>${esc(t.device)}</h3><span class="status ${t.online?'online':'offline'}">${t.online?'ONLINE':'OFFLINE'}</span></div><div class="tablet-meta">${esc(mode(t.mode))}<br>Battery: <span class="battery-percent ${batteryClass}">${battery}%</span> · Last seen: ${esc(ago(t.lastSeen))}<br><span class="preview-apps-row"><span>Preview: ${esc(ago(t.previewAt))}</span><span class="card-app-count">Total apps: ${totalApps}</span></span><br><span class="launcher-version ${launcher.className}">${esc(launcher.label)}</span></div><div class="sales"><div class="sale"><small>TODAY</small>${money(t.sales?.today)}</div><div class="sale"><small>THIS WEEK</small>${money(t.sales?.week)}</div><div class="sale"><small>THIS MONTH</small>${money(t.sales?.month)}</div><div class="sale"><small>ALL-TIME</small>${money(t.sales?.allTime)}</div></div><div class="tablet-actions"><button data-remote="${t.id}">REMOTE CONTROL</button><button data-settings="${t.id}" class="secondary">ADMIN SETTINGS</button></div></div></article>`;}
 function renderDashboard(data){state.tablets=(data.tablets||[]).filter(t=>String(t.licenseStatus||'USED').toUpperCase()==='USED'&&t.licenseKey&&t.installId).map(t=>({...t,location:tabletLocation(t)}));const online=state.tablets.filter(x=>x.online).length,
 locations=[...new Set(state.tablets.map(tabletLocation))].sort((a,b)=>
   String(a).localeCompare(String(b), undefined, {sensitivity:'base', numeric:true})
@@ -232,7 +232,20 @@ async function refresh(){
 }
 function modal(html){$('#modal-content').innerHTML=html;$('#modal').classList.remove('hidden');}
 function closeModal(){$('#modal').classList.add('hidden');$('#modal-content').innerHTML='';}
-function bindTabletButtons(){$$('[data-preview]').forEach(el=>el.onclick=()=>{const t=state.tablets.find(x=>x.id==el.dataset.preview);if(t?.preview)modal(`<h2>${esc(t.device)} — SCREEN PREVIEW</h2><img src="${esc(t.preview)}" style="width:100%;max-height:75vh;object-fit:contain;background:#000">`);});$$('[data-remote]').forEach(el=>el.onclick=()=>remoteModal(Number(el.dataset.remote)));$$('[data-settings]').forEach(el=>el.onclick=()=>settingsModal(Number(el.dataset.settings)));}
+function bindTabletButtons(){$$('[data-preview]').forEach(el=>el.onclick=()=>{const t=state.tablets.find(x=>x.id==el.dataset.preview);if(t?.preview)modal(`<h2>${esc(t.device)} — SCREEN PREVIEW</h2><img src="${esc(t.preview)}" style="width:100%;max-height:75vh;object-fit:contain;background:#000">`);});$$('[data-remote]').forEach(el=>el.onclick=()=>remoteModal(Number(el.dataset.remote)));$$('[data-settings]').forEach(el=>el.onclick=()=>settingsModal(Number(el.dataset.settings)));$$('[data-remove-tablet]').forEach(el=>el.onclick=event=>{event.stopPropagation();removeTabletFromDashboard(Number(el.dataset.removeTablet),el);});}
+async function removeTabletFromDashboard(id,button){
+  const t=state.tablets.find(x=>Number(x.id)===Number(id));
+  if(!t)throw new Error('Tablet not found. Refresh the dashboard and try again.');
+  const license=String(t.licenseKey||'').trim(),installId=String(t.installId||'').trim();
+  if(!license)throw new Error('This tablet has no license key to release.');
+  const ok=confirm(`Remove ${t.device} from the Monitoring Dashboard?\n\nThis will RELEASE license ${license} from this installation. The license will become available for reuse.\n\nThis does not erase the tablet. Continue?`);
+  if(!ok)return;
+  await busy(button,async()=>{
+    const result=await CoinTabApi.release(license,installId);
+    toast(result?.message||`${t.device} removed. License released.`);
+    await refresh();
+  });
+}
 function bindLocationUpdateButtons(){
   $$('[data-location-update-apps]').forEach(button=>button.onclick=()=>busy(button,async()=>{const location=button.dataset.locationUpdateApps;if(!confirm('Update ALL Play Store apps on every tablet at '+location+'?'))return;await CoinTabApi.command('UPDATE_APPS',{location},{all:true});toast('All-app update queued for '+location);}));
   $$('[data-location-update-launchers]').forEach(button=>button.onclick=()=>busy(button,async()=>{const location=button.dataset.locationUpdateLaunchers;if(!confirm('Update the launcher on every tablet at '+location+'?'))return;await CoinTabApi.command('UPDATE_LAUNCHER',{location},{});toast('Launcher update queued for every tablet at '+location);}));
@@ -245,6 +258,12 @@ function settingsModal(id){
   const themes=['Midnight Blue','Neon Arcade','Emerald Matrix','Crimson Carbon','Royal Gold','Ocean Cyan','Violet Storm','Sunset Orange','Ice Silver','Rose Neon'];
   const appRows=apps.map((a,index)=>{const label=esc(a.label||a.name||a.package||'APP'),pkg=esc(a.package||''),protectedApp=!!a.protected;return`<div class="policy-row" data-app-index="${index}"><div class="policy-name"><span class="policy-icon">${label.slice(0,1).toUpperCase()}</span><span><b>${label}</b><small>${pkg}${protectedApp?' · PROTECTED':''}</small></span></div><div class="policy-actions"><label><input class="p-display" type="checkbox" ${a.displayed!==false?'checked':''}> DISPLAY</label><label><input class="p-pin" type="checkbox" ${a.requirePin?'checked':''}> PIN</label><label><input class="p-clear" type="checkbox" ${a.clearData?'checked':''} ${protectedApp?'disabled':''}> CLEAR</label></div></div>`;}).join('');
   modal(`<div class="admin-dialog-head"><div><h2>${esc(t.device)} — TABLET ADMIN SETTINGS</h2><p>Changes are securely queued and applied by this licensed tablet on its next online heartbeat.</p></div></div>
+  <section class="admin-section license-info-section"><h3>Tablet License</h3><div class="license-info-grid">
+    <div><small>LICENSE KEY</small><b>${esc(t.licenseKey||'NOT REPORTED')}</b></div>
+    <div><small>STATUS</small><b>${esc(String(t.licenseStatus||'USED').toUpperCase())}</b></div>
+    <div><small>INSTALL ID</small><b>${esc(t.installId||'NOT REPORTED')}</b></div>
+    <div><small>LOCATION</small><b>${esc(tabletLocation(t)||'UNASSIGNED')}</b></div>
+  </div></section>
   <section class="admin-section"><h3>Connection & Mode</h3><div class="form-grid admin-grid">
     <label>Operating Mode<select id="m-mode"><option value="0">Centralized Mode</option><option value="1">Centralized Mode With Smart Charging</option><option value="3">Standalone Smart Charging</option><option value="4">Direct USB Charger Only</option></select></label>
     <label>Controller URL<input id="m-url" value="${esc(s.url||s.controllerUrl||'')}" placeholder="http://192.168.1.90"></label>

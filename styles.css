@@ -957,3 +957,13 @@ input,select,textarea{font-family:Arial,Helvetica,sans-serif!important;font-size
 /* v6.0.16 readable Appearance dropdowns */
 #m-lock-style,#m-lock-font{color:#fff!important;background:color-mix(in srgb,var(--acct-panel) 65%,#090b10 35%)!important}
 #m-lock-style option,#m-lock-font option{color:#111!important;background:#fff!important}
+
+/* Tablet removal + license details */
+.tablet-card{position:relative}
+.tablet-remove{position:absolute;top:8px;right:8px;z-index:4;width:31px;height:31px;min-width:31px;padding:0!important;display:grid;place-items:center;border:1px solid #ff626d!important;border-radius:50%!important;background:#25070b!important;color:#ff747e!important;font:900 22px/1 Arial,sans-serif!important;box-shadow:0 2px 8px #0008!important}
+.tablet-remove:hover{background:#7a101a!important;color:#fff!important;transform:scale(1.06)}
+.license-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.license-info-grid>div{min-width:0;padding:12px;border:1px solid var(--line);background:#091728;border-radius:10px}
+.license-info-grid small{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}
+.license-info-grid b{display:block;word-break:break-all;color:var(--acct-accent,#fb923c)}
+@media(max-width:620px){.license-info-grid{grid-template-columns:1fr}}
