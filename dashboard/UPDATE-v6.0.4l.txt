@@ -1,8 +1,0 @@
-GUSTAVO'S COINTAB DASHBOARD v6.0.4l
-
-TOTAL APPS ONLY
-- Removed ONLINE/OFFLINE from Installed App Controls.
-- Shows only:
-    TOTAL APPS: 47
-- Uses the tablet's last reported installed Play Store app list.
-- The count stays visible whether the tablet is online or offline.
