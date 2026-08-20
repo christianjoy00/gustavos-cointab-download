@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07111f"><title>Gustavo's Cointab Dashboard</title><link rel="stylesheet" href="styles.css?v=auto-restore-register-20260820c"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07111f"><title>Gustavo's Cointab Dashboard</title><link rel="stylesheet" href="styles.css?v=registration-visibility-20260820d"></head>
 <body>
 <section id="login" class="login-screen"><form id="login-form" class="login-card"><div class="brand-mark">◉</div><h1>GUSTAVO'S COINTAB</h1><p>PRIVATE MONITORING DASHBOARD</p><div id="login-message" class="message">Enter the registered Gmail and Administrator PIN.</div><label>Registered Gmail<input id="email" type="email" autocomplete="username" required placeholder="customer@gmail.com"></label><label>Administrator PIN<input id="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="8" required placeholder="Current launcher PIN"></label><button type="submit">CONTINUE SECURE LOGIN</button></form></section>
 <div id="app" class="shell hidden">
@@ -8,7 +8,7 @@
     <section id="dashboard-page" class="page active"><div id="summary-cards" class="summary"></div><div id="locations"></div></section>
     <section id="admin-page" class="page">
       <div class="panel script-panel admin-main-panel">
-        <div class="panel-head"><div><h2>Dashboard Admin Settings</h2><p>Security, refresh behavior, monitoring and tablet organization.</p></div></div>
+        <div class="panel-head"><div><h2>Dashboard Admin Settings</h2><p>Security, refresh behavior and monitoring controls.</p></div></div>
         <div id="admin-message" class="message"></div>
         <div class="form-grid admin-security-grid">
           <label class="check"><input id="requireLogin" type="checkbox"> Require Gmail and Administrator PIN</label>
@@ -18,9 +18,6 @@
           <label>Live View Duration (minutes)<input id="liveMinutes" type="number" min="1" max="60" value="10"></label>
           <label class="check"><input id="monitoringEnabled" type="checkbox" checked> Enable Remote Monitoring</label>
         </div>
-        <h3>Location and Tablet Organization</h3>
-        <p>Rename locations and tablets below. You can also disable preview uploads for an individual tablet.</p>
-        <div id="organization" class="organization-list"></div>
       </div>
 
       <div class="panel danger-panel script-panel">
@@ -52,4 +49,4 @@
   </main>
 </div>
 <div id="modal" class="modal hidden"><div class="modal-card"><button id="modal-close" class="modal-close">×</button><div id="modal-content"></div></div></div><div id="toast"></div>
-<script src="config.js?v=auto-restore-register-20260820c"></script><script src="api-client.js?v=auto-restore-register-20260820c"></script><script src="app.js?v=auto-restore-register-20260820c"></script></body></html>
+<script src="config.js?v=registration-visibility-20260820d"></script><script src="api-client.js?v=registration-visibility-20260820d"></script><script src="app.js?v=registration-visibility-20260820d"></script></body></html>

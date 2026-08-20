@@ -289,31 +289,86 @@ const accountThemePalettes=[
 ['#07111f','#0b1b31','#3154e8','#218bff','#eaf2ff','#92b4df'],['#080514','#17102a','#a855f7','#22d3ee','#f5edff','#bca8d9'],['#031412','#08241f','#059669','#34d399','#ecfdf5','#9ad9c7'],['#140709','#300d12','#dc2626','#fb923c','#fff7ed','#fdba74'],['#151006','#2b2108','#ca8a04','#facc15','#fffbea','#d8c67a'],['#031923','#082d3c','#0891b2','#22d3ee','#ecfeff','#95dce6'],['#120a2a','#25144c','#7c3aed','#c084fc','#faf5ff','#c7afea'],['#211006','#44200c','#ea580c','#ffa24c','#fff7ed','#fdba74'],['#111827','#1f2937','#64748b','#e2e8f0','#f8fafc','#aeb9c8'],['#200a18','#45132f','#db2777','#fb7185','#fff1f2','#f2a8c4']];
 function applyAccountDashboardTheme(tablets){const list=(tablets||[]).filter(t=>t&&t.settings&&Number.isFinite(Number(t.settings.uiTheme)));const theme=Math.max(0,Math.min(9,Number(list[0]?.settings?.uiTheme??3)));const p=accountThemePalettes[theme]||accountThemePalettes[3],r=document.documentElement.style;r.setProperty('--acct-bg',p[0]);r.setProperty('--acct-panel',p[1]);r.setProperty('--acct-primary',p[2]);r.setProperty('--acct-accent',p[3]);r.setProperty('--acct-text',p[4]);r.setProperty('--acct-muted',p[5]);}
 function renderDashboard(data){
-  const valid=(data.tablets||[]).filter(t=>String(t.licenseStatus||'USED').toUpperCase()==='USED'&&t.licenseKey&&t.installId).map(t=>({...t,location:tabletLocation(t)}));
+  // Show every tablet that the server reports as registered/active.
+  // Do NOT require licenseKey/installId fields to already be populated:
+  // heartbeats can arrive before the license metadata is joined into the summary.
+  const serverTablets=Array.isArray(data?.tablets)?data.tablets:[];
+  const invalidOfflineStatuses=new Set(['REVOKED','AVAILABLE','UNUSED','EXPIRED','DISABLED']);
+  const valid=serverTablets
+    .filter(t=>{
+      if(!t||(!t.id&&!t.installId&&!t.licenseKey))return false;
+      const status=String(t.licenseStatus||'').trim().toUpperCase();
+      // An ONLINE tablet must always remain visible. For offline tablets,
+      // hide only records the server explicitly marks as no longer assigned.
+      return !!t.online || !invalidOfflineStatuses.has(status);
+    })
+    .map(t=>({...t,
+      device:String(t.device||t.deviceName||t.settings?.deviceName||('TABLET '+(t.id||''))).trim()||'TABLET',
+      location:tabletLocation(t)
+    }));
+
   state.allTablets=valid;
+
   const hiddenMap=hiddenTabletMap();
   let hiddenChanged=false;
-  // A fresh heartbeat/registration AFTER the tablet was hidden automatically restores it.
+
+  // Restore a hidden tablet as soon as a genuinely NEW heartbeat/registration
+  // is seen. Compare both parsed time and the raw value so different server
+  // timestamp formats cannot keep a tablet hidden forever.
   for(const t of valid){
     const key=tabletHideKey(t),entry=hiddenMap[key];
     if(!entry)continue;
-    const seen=tabletSeenMs(t),baseline=Number(entry.seenAt||0),hiddenAt=Number(entry.hiddenAt||0);
-    if(seen>Math.max(baseline,hiddenAt+1000)){
-      delete hiddenMap[key];hiddenChanged=true;
-      toast(`${t.device||'Tablet'} registered again and was restored to the dashboard.`);
+
+    const seen=tabletSeenMs(t);
+    const rawSeen=String(t.lastSeen||'');
+    const baseline=Number(entry.seenAt||0);
+    const previousRaw=String(entry.seenRaw||'');
+    const hiddenAt=Number(entry.hiddenAt||0);
+
+    const parsedHeartbeatAdvanced = seen>baseline && seen>hiddenAt;
+    const rawHeartbeatChanged = !!rawSeen && !!previousRaw && rawSeen!==previousRaw;
+    const legacyHiddenEntryOnline = !previousRaw && !!t.online && Date.now()-hiddenAt>3000;
+
+    if(parsedHeartbeatAdvanced || rawHeartbeatChanged || legacyHiddenEntryOnline){
+      delete hiddenMap[key];
+      hiddenChanged=true;
+      toast(`${t.device||'Tablet'} is reporting again and was restored to the dashboard.`);
     }
   }
+
   if(hiddenChanged)saveHiddenTabletMap(hiddenMap);
+
   const hidden=new Set(Object.keys(hiddenMap));
   state.hiddenTablets=valid.filter(t=>hidden.has(tabletHideKey(t)));
   state.tablets=valid.filter(t=>!hidden.has(tabletHideKey(t)));
+
   applyAccountDashboardTheme(valid);
-  const online=state.tablets.filter(x=>x.online).length,
-  locations=[...new Set(state.tablets.map(tabletLocation))].sort((a,b)=>String(a).localeCompare(String(b),undefined,{sensitivity:'base',numeric:true}));
-  $('#summary-cards').innerHTML=stat('ONLINE TABLETS',online,'#12d977')+stat('REGISTERED TABLETS',state.tablets.length)+stat('LOCATIONS',locations.length,'#38bdf8')+stat('ALL-TIME SALES',money(data.sales?.allTime),'#ffc13d');
-  const locationHtml=locations.map(location=>{const tablets=state.tablets.filter(x=>tabletLocation(x)===location).sort(tabletNaturalCompare);return`<section><div class="location-title"><h2>${esc(location)}</h2><div class="location-actions"><span>${tablets.length} TABLET${tablets.length===1?'':'S'}</span><button class="location-update-apps secondary" data-location-update-apps="${esc(location)}">UPDATE ALL APPS</button><button class="location-update-launchers" data-location-update-launchers="${esc(location)}">UPDATE ALL LAUNCHERS</button><button class="location-sync-apps" data-location-sync-apps="${esc(location)}">SYNC LOCATION APPS</button><button class="location-uninstall-apps danger" data-location-uninstall-apps="${esc(location)}">UNINSTALL APPS</button></div></div><div class="tablet-grid">${tablets.map(tabletCard).join('')}</div></section>`;}).join('');
-  $('#locations').innerHTML=removedTabletsPanel()+(locationHtml||'<div class="panel">No visible registered tablets. Restore one from Removed Tablets if needed.</div>');
-  fillTargets();bindTabletButtons();bindRemovedTabletButtons();bindLocationUpdateButtons();
+
+  const online=state.tablets.filter(x=>x.online).length;
+  const locations=[...new Set(state.tablets.map(tabletLocation))]
+    .sort((a,b)=>String(a).localeCompare(String(b),undefined,{sensitivity:'base',numeric:true}));
+
+  $('#summary-cards').innerHTML=
+    stat('ONLINE TABLETS',online,'#12d977')+
+    stat('REGISTERED TABLETS',state.tablets.length)+
+    stat('LOCATIONS',locations.length,'#38bdf8')+
+    stat('ALL-TIME SALES',money(data.sales?.allTime),'#ffc13d');
+
+  const locationHtml=locations.map(location=>{
+    const tablets=state.tablets
+      .filter(x=>tabletLocation(x)===location)
+      .sort(tabletNaturalCompare);
+    return `<section><div class="location-title"><h2>${esc(location)}</h2><div class="location-actions"><span>${tablets.length} TABLET${tablets.length===1?'':'S'}</span><button class="location-update-apps secondary" data-location-update-apps="${esc(location)}">UPDATE ALL APPS</button><button class="location-update-launchers" data-location-update-launchers="${esc(location)}">UPDATE ALL LAUNCHERS</button><button class="location-sync-apps" data-location-sync-apps="${esc(location)}">SYNC LOCATION APPS</button><button class="location-uninstall-apps danger" data-location-uninstall-apps="${esc(location)}">UNINSTALL APPS</button></div></div><div class="tablet-grid">${tablets.map(tabletCard).join('')}</div></section>`;
+  }).join('');
+
+  $('#locations').innerHTML=
+    removedTabletsPanel()+
+    (locationHtml||'<div class="panel">No tablets are being returned by the monitoring server yet.</div>');
+
+  fillTargets();
+  bindTabletButtons();
+  bindRemovedTabletButtons();
+  bindLocationUpdateButtons();
 }
 function optionList(locations,allLabel='ALL LOCATIONS'){return '<option>'+allLabel+'</option>'+locations.map(x=>`<option>${esc(x)}</option>`).join('');}
 function tabletOptions(location,allLabel='ALL TABLETS IN SELECTED LOCATION'){const tabs=state.tablets.filter(x=>!location||location==='ALL LOCATIONS'||tabletLocation(x)===location).sort(tabletNaturalCompare);return '<option value="">'+allLabel+'</option>'+tabs.map(x=>`<option value="${x.id}">${esc(x.device)}</option>`).join('');}
@@ -347,7 +402,7 @@ async function removeTabletFromDashboard(id,button){
   if(!ok)return;
   await busy(button,async()=>{
     const key=tabletHideKey(t),map=hiddenTabletMap();
-    map[key]={hiddenAt:Date.now(),seenAt:tabletSeenMs(t)};
+    map[key]={hiddenAt:Date.now(),seenAt:tabletSeenMs(t),seenRaw:String(t.lastSeen||''),wasOnline:!!t.online};
     saveHiddenTabletMap(map);
     toast(`${t.device} hidden. Its license is still assigned. Re-registering the tablet will restore it automatically.`);await refresh();
   });
@@ -660,9 +715,24 @@ function tabletAppActionModal(id,action){
 }
 
 function configMap(rows){const result={};(rows||[]).forEach(r=>{if(r.scope==='ACCOUNT'||r.scope==='GLOBAL')result[r.config_key]=r.value;});return result;}
-function renderOrganization(){const host=$('#organization');if(!host)return;host.innerHTML=state.tablets.map(t=>`<div class="organization-row" data-org-id="${t.id}"><label>Location<input class="org-location" value="${esc(t.location||'UNASSIGNED')}"></label><label>Tablet Name<input class="org-device" value="${esc(t.device||'TABLET')}"></label><label class="check org-monitor"><input class="org-monitoring" type="checkbox" ${t.monitoringEnabled!==false?'checked':''}> Monitor</label><button class="danger org-remove" type="button">REMOVE TABLET</button></div>`).join('');$$('.org-remove').forEach(btn=>btn.onclick=()=>{const row=btn.closest('.organization-row');if(!confirm('Disable monitoring for this tablet? Full removal requires deactivating or releasing its license.'))return;row.querySelector('.org-monitoring').checked=false;toast('Monitoring disabled in this form. Press SAVE SETTINGS to queue it.');});}
-async function loadDashboardAdmin(){renderOrganization();fillTargets();try{const data=await CoinTabApi.configuration(),m=configMap(data.configuration);if(m.requireLogin!==undefined)$('#requireLogin').checked=!!m.requireLogin;if(m.requireAdminPin!==undefined)$('#requireAdminPin').checked=!!m.requireAdminPin;if(m.trustedDays!==undefined)$('#trustedDays').value=m.trustedDays;if(m.previewSeconds!==undefined)$('#previewSeconds').value=m.previewSeconds;if(m.liveMinutes!==undefined)$('#liveMinutes').value=m.liveMinutes;if(m.monitoringEnabled!==undefined)$('#monitoringEnabled').checked=!!m.monitoringEnabled;}catch(e){toast('Dashboard settings loaded from current defaults: '+e.message,true);}}
-async function saveDashboardAdmin(button){await busy(button,async()=>{const settings={requireLogin:$('#requireLogin').checked,requireAdminPin:$('#requireAdminPin').checked,trustedDays:Number($('#trustedDays').value||14),previewSeconds:Number($('#previewSeconds').value||15),liveMinutes:Number($('#liveMinutes').value||10),monitoringEnabled:$('#monitoringEnabled').checked};for(const [key,value] of Object.entries(settings))await CoinTabApi.setConfiguration('ACCOUNT','',key,value);for(const row of $$('.organization-row')){const id=Number(row.dataset.orgId),t=state.tablets.find(x=>x.id===id);if(!t)continue;const payload={settings:{locationName:row.querySelector('.org-location').value.trim(),deviceName:row.querySelector('.org-device').value.trim().toUpperCase(),screenMonitoringEnabled:row.querySelector('.org-monitoring').checked}};await CoinTabApi.command('APPLY_SETTINGS',{tabletId:id},payload);}toast('Settings and tablet organization queued.');await refresh();});}
+async function loadDashboardAdmin(){fillTargets();try{const data=await CoinTabApi.configuration(),m=configMap(data.configuration);if(m.requireLogin!==undefined)$('#requireLogin').checked=!!m.requireLogin;if(m.requireAdminPin!==undefined)$('#requireAdminPin').checked=!!m.requireAdminPin;if(m.trustedDays!==undefined)$('#trustedDays').value=m.trustedDays;if(m.previewSeconds!==undefined)$('#previewSeconds').value=m.previewSeconds;if(m.liveMinutes!==undefined)$('#liveMinutes').value=m.liveMinutes;if(m.monitoringEnabled!==undefined)$('#monitoringEnabled').checked=!!m.monitoringEnabled;}catch(e){toast('Dashboard settings loaded from current defaults: '+e.message,true);}}
+async function saveDashboardAdmin(button){
+  await busy(button,async()=>{
+    const settings={
+      requireLogin:$('#requireLogin').checked,
+      requireAdminPin:$('#requireAdminPin').checked,
+      trustedDays:Number($('#trustedDays').value||14),
+      previewSeconds:Number($('#previewSeconds').value||15),
+      liveMinutes:Number($('#liveMinutes').value||10),
+      monitoringEnabled:$('#monitoringEnabled').checked
+    };
+    for(const [key,value] of Object.entries(settings)){
+      await CoinTabApi.setConfiguration('ACCOUNT','',key,value);
+    }
+    toast('Dashboard settings saved.');
+    await refresh();
+  });
+}
 function locationTarget(selectId,tabletSelectId=''){const location=$('#'+selectId)?.value||'ALL LOCATIONS';const tabletId=tabletSelectId?Number($('#'+tabletSelectId)?.value||0):0;return tabletId?{tabletId}:location==='ALL LOCATIONS'?{}:{location};}
 function selectedPackagesFromManual(inputId){const manual=$('#'+inputId)?.value.trim();const p=[...state.selectedApps];if(manual&&!p.includes(manual))p.push(manual);if(!p.length)throw new Error('Select or enter at least one application package.');return p;}
 function showDeploy(name){$$('.deploy-pane').forEach(x=>x.classList.toggle('active',x.id==='deploy-'+name));}
