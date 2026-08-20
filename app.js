@@ -243,12 +243,31 @@ function tabletCard(t){
   const totalApps=Array.isArray(t.apps)?t.apps.length:0;
   return`<article class="tablet-card" data-tablet="${t.id}"><button class="tablet-remove" data-remove-tablet="${t.id}" type="button" title="Remove tablet" aria-label="Remove ${esc(t.device)}">×</button><div class="preview" data-preview="${t.id}">${preview}</div><div class="tablet-body"><div class="tablet-head"><h3>${esc(t.device)}</h3><span class="status ${t.online?'online':'offline'}">${t.online?'ONLINE':'OFFLINE'}</span></div><div class="tablet-meta">${esc(mode(t.mode))}<br>Battery: <span class="battery-percent ${batteryClass}">${battery}%</span> · Last seen: ${esc(ago(t.lastSeen))}<br><span class="preview-apps-row"><span>Preview: ${esc(ago(t.previewAt))}</span><span class="card-app-count">Total apps: ${totalApps}</span></span><br><span class="launcher-version ${launcher.className}">${esc(launcher.label)}</span></div><div class="sales"><div class="sale"><small>TODAY</small>${money(t.sales?.today)}</div><div class="sale"><small>THIS WEEK</small>${money(t.sales?.week)}</div><div class="sale"><small>THIS MONTH</small>${money(t.sales?.month)}</div><div class="sale"><small>ALL-TIME</small>${money(t.sales?.allTime)}</div></div><div class="tablet-actions"><button data-remote="${t.id}">REMOTE CONTROL</button><button data-settings="${t.id}" class="secondary">ADMIN SETTINGS</button></div></div></article>`;}
 
-const HIDDEN_TABLETS_STORAGE_KEY='gustavosCointabHiddenTabletsV1';
+const HIDDEN_TABLETS_STORAGE_KEY='gustavosCointabHiddenTabletsV2';
+const OLD_HIDDEN_TABLETS_STORAGE_KEY='gustavosCointabHiddenTabletsV1';
 function tabletHideKey(t){return String(t?.installId||t?.licenseKey||t?.id||'').trim();}
-function hiddenTabletKeys(){
-  try{const raw=JSON.parse(localStorage.getItem(HIDDEN_TABLETS_STORAGE_KEY)||'[]');return new Set(Array.isArray(raw)?raw.map(String):[]);}catch(_){return new Set();}
+function tabletSeenMs(t){
+  const raw=String(t?.lastSeen||'').trim();
+  if(!raw)return 0;
+  const normalized=/Z$|[+-]\d\d:?\d\d$/.test(raw)?raw:raw.replace(' ','T')+'Z';
+  const ms=Date.parse(normalized);return Number.isFinite(ms)?ms:0;
 }
-function saveHiddenTabletKeys(keys){localStorage.setItem(HIDDEN_TABLETS_STORAGE_KEY,JSON.stringify([...keys]));}
+function hiddenTabletMap(){
+  try{
+    // V1 stored only keys forever. Ignore/remove it so tablets that were already stuck hidden can return.
+    localStorage.removeItem(OLD_HIDDEN_TABLETS_STORAGE_KEY);
+    const raw=JSON.parse(localStorage.getItem(HIDDEN_TABLETS_STORAGE_KEY)||'{}');
+    if(!raw||Array.isArray(raw)||typeof raw!=='object')return {};
+    return raw;
+  }catch(_){return {};}
+}
+function saveHiddenTabletMap(map){localStorage.setItem(HIDDEN_TABLETS_STORAGE_KEY,JSON.stringify(map||{}));}
+function hiddenTabletKeys(){return new Set(Object.keys(hiddenTabletMap()));}
+function saveHiddenTabletKeys(keys){
+  const current=hiddenTabletMap(),next={};
+  for(const key of keys)next[key]=current[key]||{hiddenAt:Date.now(),seenAt:0};
+  saveHiddenTabletMap(next);
+}
 function removedTabletRow(t){
   return `<div class="removed-tablet-row"><div><b>${esc(t.device||'TABLET')}</b><small>${esc(tabletLocation(t))} · License: ${esc(t.licenseKey||'NOT REPORTED')}</small></div><button type="button" class="secondary" data-restore-tablet="${esc(tabletHideKey(t))}">RESTORE</button></div>`;
 }
@@ -262,7 +281,7 @@ function bindRemovedTabletButtons(){
     const tablet=state.hiddenTablets.find(t=>tabletHideKey(t)===key);
     if(!tablet)return;
     if(!confirm(`Restore ${tablet.device} to the Monitoring Dashboard?`))return;
-    const keys=hiddenTabletKeys();keys.delete(key);saveHiddenTabletKeys(keys);
+    const map=hiddenTabletMap();delete map[key];saveHiddenTabletMap(map);
     toast(`${tablet.device} restored to the dashboard.`);await refresh();
   });
 }
@@ -272,7 +291,20 @@ function applyAccountDashboardTheme(tablets){const list=(tablets||[]).filter(t=>
 function renderDashboard(data){
   const valid=(data.tablets||[]).filter(t=>String(t.licenseStatus||'USED').toUpperCase()==='USED'&&t.licenseKey&&t.installId).map(t=>({...t,location:tabletLocation(t)}));
   state.allTablets=valid;
-  const hidden=hiddenTabletKeys();
+  const hiddenMap=hiddenTabletMap();
+  let hiddenChanged=false;
+  // A fresh heartbeat/registration AFTER the tablet was hidden automatically restores it.
+  for(const t of valid){
+    const key=tabletHideKey(t),entry=hiddenMap[key];
+    if(!entry)continue;
+    const seen=tabletSeenMs(t),baseline=Number(entry.seenAt||0),hiddenAt=Number(entry.hiddenAt||0);
+    if(seen>Math.max(baseline,hiddenAt+1000)){
+      delete hiddenMap[key];hiddenChanged=true;
+      toast(`${t.device||'Tablet'} registered again and was restored to the dashboard.`);
+    }
+  }
+  if(hiddenChanged)saveHiddenTabletMap(hiddenMap);
+  const hidden=new Set(Object.keys(hiddenMap));
   state.hiddenTablets=valid.filter(t=>hidden.has(tabletHideKey(t)));
   state.tablets=valid.filter(t=>!hidden.has(tabletHideKey(t)));
   applyAccountDashboardTheme(valid);
@@ -314,8 +346,10 @@ async function removeTabletFromDashboard(id,button){
   const ok=confirm(`Hide ${t.device} from the Monitoring Dashboard?\n\nIts license will NOT be released or changed. You can restore this tablet later from REMOVED TABLETS.\n\nContinue?`);
   if(!ok)return;
   await busy(button,async()=>{
-    const keys=hiddenTabletKeys();keys.add(tabletHideKey(t));saveHiddenTabletKeys(keys);
-    toast(`${t.device} hidden. Its license is still assigned.`);await refresh();
+    const key=tabletHideKey(t),map=hiddenTabletMap();
+    map[key]={hiddenAt:Date.now(),seenAt:tabletSeenMs(t)};
+    saveHiddenTabletMap(map);
+    toast(`${t.device} hidden. Its license is still assigned. Re-registering the tablet will restore it automatically.`);await refresh();
   });
 }
 function bindLocationUpdateButtons(){
