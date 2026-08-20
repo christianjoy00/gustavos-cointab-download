@@ -1,0 +1,9 @@
+GUSTAVO'S COINTAB v6.0.4
+
+1. Upload all dashboard files to rentaride.top and replace the old copies.
+2. Clear the browser cache or open an InPrivate window.
+3. Import Gustavos-Cointab-v6.0.4-LAUNCHER-VERSION-AND-SALES-RECOVERY.sql into the rentarid_cointab database.
+4. The SQL owner email defaults to christianjoyn00@gmail.com. Edit @owner_email near the top only if necessary.
+5. Identifiable Google Sheets sales are attached to matching tablets.
+6. Sales that had no Gmail/location/MAC are preserved under a visible LEGACY CHARGER SALES archive tablet.
+7. Launcher cards display the installed version from heartbeat or settings.appVersion, formatted like V6.0.0.

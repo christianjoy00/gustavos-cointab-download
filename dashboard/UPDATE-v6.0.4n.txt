@@ -1,0 +1,18 @@
+GUSTAVO'S COINTAB DASHBOARD v6.0.4n
+
+REAL LICENSES ONLY
+- Manage Licenses now shows only real customer licenses beginning with CTR-.
+- Hidden migration/archive keys:
+    MIG-SALE-...
+    MIG-...
+    LEGACY-...
+    CTR-ARCH-...
+    ARCHIVE-...
+- Hidden keys are excluded from:
+    ALL LICENSES
+    AVAILABLE
+    USED
+    search results
+    tab counts
+- No database rows are deleted.
+- Historical sales and migration records remain preserved in MySQL.

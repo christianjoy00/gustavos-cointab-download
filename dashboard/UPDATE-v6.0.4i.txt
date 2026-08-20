@@ -1,0 +1,12 @@
+GUSTAVO'S COINTAB DASHBOARD v6.0.4i
+TABLET ADMIN UPDATE APPS BUTTON
+
+CHANGES
+- The bottom CLOSE button in every Tablet Admin Settings window is now UPDATE APPS.
+- Clicking UPDATE APPS queues UPDATE_APPS with all=true for only the selected tablet.
+- The red X in the upper-right corner still closes the window.
+- Existing login, API proxy, five-column layout, license history, and all other controls are unchanged.
+
+INSTALL
+Upload and extract all files over the current dashboard at rentaride.top.
+Keep api-proxy.php and .htaccess. Clear browser cache afterward.

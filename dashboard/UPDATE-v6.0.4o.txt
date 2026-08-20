@@ -1,0 +1,20 @@
+GUSTAVO'S COINTAB DASHBOARD v6.0.4o
+
+SEARCHABLE UPDATE / UNINSTALL APP LISTS
+
+ADMIN SETTINGS > PLAY STORE APP DEPLOYMENT
+- Update Apps can load apps from any source tablet.
+- Uninstall Apps can load apps from any source tablet.
+- Search by app name or Android package.
+- Select multiple apps.
+- Apply to one tablet, one location, or all tablets.
+- Protected Android/Google system apps are disabled in uninstall selection.
+- Optional package inputs no longer accept browser Gmail autofill.
+
+EACH TABLET > ADMIN SETTINGS
+- Added UNINSTALL APPS button.
+- Automatically loads that tablet's reported app list.
+- Search and select multiple apps before queuing uninstall.
+
+No SQL or PHP change is required when the existing server already supports
+UPDATE_APPS and UNINSTALL_APPS commands.
