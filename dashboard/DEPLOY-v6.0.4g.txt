@@ -1,6 +1,0 @@
-Dashboard v6.0.4g
-- Keeps the working v6.0.4 proxy/login behavior.
-- Shows only tablets with a USED license, license key and installation ID.
-- Refreshes the dashboard immediately after a license transfer.
-- Keeps 5 cards per row and launcher-version color notices.
-Upload all files to rentaride.top and clear browser cache.

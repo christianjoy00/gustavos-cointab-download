@@ -1,3 +1,0 @@
-Gustavo's Cointab Dashboard v6.0.4e
-
-Keeps the working v6.0.4d API/proxy and five-tablet grid. Restores the full original Google Script-style Dashboard Admin Settings interface. Upload all files to rentaride.top and clear site cache.
