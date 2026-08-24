@@ -1,0 +1,11 @@
+GUSTAVO'S COINTAB DASHBOARD - TABLET TIME LEFT
+
+Added to every tablet card:
+- Standalone / Centralized / Smart modes:
+  Shows TIME LEFT as HH:MM:SS while remainingSeconds > 0.
+- Direct USB Charger Only:
+  Shows MINUTES LEFT as whole remaining minutes while remainingSeconds > 0.
+- When remainingSeconds is 0:
+  The entire time/minutes display is hidden. No 0 MIN and no 00:00:00.
+
+Existing Seller Transfer feature is preserved.

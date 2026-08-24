@@ -1017,3 +1017,32 @@ input,select,textarea{font-family:Arial,Helvetica,sans-serif!important;font-size
   line-height:1.35;
   flex:1 1 280px;
 }
+
+
+/* Live paid-time display on tablet cards.
+   Hidden completely when remainingSeconds is 0. */
+.tablet-paid-time{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin:12px 0;
+  padding:10px 12px;
+  border:1px solid var(--acct-primary,#3154e8);
+  border-radius:10px;
+  background:rgba(8,27,49,.86);
+}
+.tablet-paid-time small{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.06em;
+  color:var(--acct-muted,#92b4df);
+}
+.tablet-paid-time b{
+  font-size:20px;
+  color:var(--acct-text,#eaf2ff);
+  white-space:nowrap;
+}
+.tablet-paid-time.direct b{
+  font-size:19px;
+}

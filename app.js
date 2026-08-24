@@ -235,13 +235,36 @@ function tabletLocation(t){
   for(const value of candidates){const v=String(value||'').trim();if(v)return v;}
   return 'UNASSIGNED';
 }
+function tabletPaidTimeHtml(t){
+  const seconds=Math.max(0,Number(t?.remainingSeconds||0));
+  if(!Number.isFinite(seconds)||seconds<=0)return '';
+
+  const rawMode=String(t?.mode??'').trim();
+  const modeLabel=String(mode(t?.mode)||'').toUpperCase();
+  const direct=rawMode==='4'||modeLabel.includes('DIRECT USB CHARGER');
+
+  if(direct){
+    // Direct Charger mode is easier for the owner to read as remaining minutes.
+    // Use ceiling so an active partial minute never disappears early.
+    const minutes=Math.max(1,Math.ceil(seconds/60));
+    return `<div class="tablet-paid-time direct"><small>MINUTES LEFT</small><b>${minutes} MIN</b></div>`;
+  }
+
+  const whole=Math.max(0,Math.floor(seconds));
+  const h=Math.floor(whole/3600);
+  const m=Math.floor((whole%3600)/60);
+  const s=whole%60;
+  const clock=[h,m,s].map(v=>String(v).padStart(2,'0')).join(':');
+  return `<div class="tablet-paid-time"><small>TIME LEFT</small><b>${clock}</b></div>`;
+}
+
 function tabletCard(t){
   const preview=t.preview?`<img src="${esc(t.preview)}" alt="${esc(t.device)} preview">`:'REMOTE SCREEN PREVIEW<br><small>Waiting for the next secure snapshot</small>';
   const launcher=launcherStatus(t);
   const battery=Math.max(0,Math.min(100,Number(t.battery||0)));
   const batteryClass=battery<=50?'battery-low':'battery-good';
   const totalApps=Array.isArray(t.apps)?t.apps.length:0;
-  return`<article class="tablet-card" data-tablet="${t.id}"><button class="tablet-remove" data-remove-tablet="${t.id}" type="button" title="Remove tablet" aria-label="Remove ${esc(t.device)}">×</button><div class="preview" data-preview="${t.id}">${preview}</div><div class="tablet-body"><div class="tablet-head"><h3>${esc(t.device)}</h3><span class="status ${t.online?'online':'offline'}">${t.online?'ONLINE':'OFFLINE'}</span></div><div class="tablet-meta">${esc(mode(t.mode))}<br>Battery: <span class="battery-percent ${batteryClass}">${battery}%</span> · Last seen: ${esc(ago(t.lastSeen))}<br><span class="preview-apps-row"><span>Preview: ${esc(ago(t.previewAt))}</span><span class="card-app-count">Total apps: ${totalApps}</span></span><br><span class="launcher-version ${launcher.className}">${esc(launcher.label)}</span></div><div class="sales"><div class="sale"><small>TODAY</small>${money(t.sales?.today)}</div><div class="sale"><small>THIS WEEK</small>${money(t.sales?.week)}</div><div class="sale"><small>THIS MONTH</small>${money(t.sales?.month)}</div><div class="sale"><small>ALL-TIME</small>${money(t.sales?.allTime)}</div></div><div class="tablet-actions"><button data-remote="${t.id}">REMOTE CONTROL</button><button data-settings="${t.id}" class="secondary">ADMIN SETTINGS</button></div></div></article>`;}
+  return`<article class="tablet-card" data-tablet="${t.id}"><button class="tablet-remove" data-remove-tablet="${t.id}" type="button" title="Remove tablet" aria-label="Remove ${esc(t.device)}">×</button><div class="preview" data-preview="${t.id}">${preview}</div><div class="tablet-body"><div class="tablet-head"><h3>${esc(t.device)}</h3><span class="status ${t.online?'online':'offline'}">${t.online?'ONLINE':'OFFLINE'}</span></div><div class="tablet-meta">${esc(mode(t.mode))}<br>Battery: <span class="battery-percent ${batteryClass}">${battery}%</span> · Last seen: ${esc(ago(t.lastSeen))}<br><span class="preview-apps-row"><span>Preview: ${esc(ago(t.previewAt))}</span><span class="card-app-count">Total apps: ${totalApps}</span></span><br><span class="launcher-version ${launcher.className}">${esc(launcher.label)}</span></div>${tabletPaidTimeHtml(t)}<div class="sales"><div class="sale"><small>TODAY</small>${money(t.sales?.today)}</div><div class="sale"><small>THIS WEEK</small>${money(t.sales?.week)}</div><div class="sale"><small>THIS MONTH</small>${money(t.sales?.month)}</div><div class="sale"><small>ALL-TIME</small>${money(t.sales?.allTime)}</div></div><div class="tablet-actions"><button data-remote="${t.id}">REMOTE CONTROL</button><button data-settings="${t.id}" class="secondary">ADMIN SETTINGS</button></div></div></article>`;}
 
 const HIDDEN_TABLETS_STORAGE_KEY='gustavosCointabHiddenTabletsV2';
 const OLD_HIDDEN_TABLETS_STORAGE_KEY='gustavosCointabHiddenTabletsV1';
