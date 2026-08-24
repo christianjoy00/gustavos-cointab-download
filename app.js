@@ -486,6 +486,10 @@ function settingsModal(id){
     <div><small>STATUS</small><b>${esc(String(t.licenseStatus||'USED').toUpperCase())}</b></div>
     <div><small>INSTALL ID</small><b>${esc(t.installId||'NOT REPORTED')}</b></div>
     <div><small>LOCATION</small><b>${esc(tabletLocation(t)||'UNASSIGNED')}</b></div>
+  </div>
+  <div class="license-seller-transfer">
+    <button id="m-seller-transfer-license" type="button">TRANSFER LICENSE AS SELLER</button>
+    <small>Transfers this license and this same activated tablet to the buyer/new owner's Gmail.</small>
   </div></section>
   <section class="admin-section"><h3>Connection & Mode</h3><div class="form-grid admin-grid">
     <label>Operating Mode<select id="m-mode"><option value="0">Centralized Mode</option><option value="1">Centralized Mode With Smart Charging</option><option value="3">Standalone Smart Charging</option><option value="4">Direct USB Charger Only</option></select></label>
@@ -530,6 +534,40 @@ function settingsModal(id){
   <section class="admin-section"><h3>Administrator Security</h3><div class="form-grid admin-grid"><label>New Administrator PIN (optional)<input id="m-pin" inputmode="numeric" maxlength="8" placeholder="Leave blank to keep current PIN"></label></div></section>
   <div class="admin-action-bar"><button id="m-reload" class="secondary">RELOAD TABLET DATA</button><button id="m-reset" class="danger">RESET TABLET SALES</button><button id="m-update">UPDATE LAUNCHER</button><button id="m-app-uninstall" class="danger">UNINSTALL APPS</button><button id="m-save">SAVE TO TABLET</button></div>`);
   $('#m-mode').value=String(s.mode??t.mode??0);$('#m-theme').value=String(s.uiTheme??3);$('#m-media').value=String(s.media||'');$('#m-lock-style').value=String(s.lockBrandAnimationStyle||'3D GLOW + PULSE');$('#m-lock-font').value=String(s.lockBrandFontStyle||'SERIF BOLD');
+  const sellerTransferButton=$('#m-seller-transfer-license');
+  if(sellerTransferButton){
+    const sellerLicense=String(t.licenseKey||'').trim();
+    if(!sellerLicense||sellerLicense==='NOT REPORTED'){
+      sellerTransferButton.disabled=true;
+      sellerTransferButton.title='This tablet has not reported a license key yet.';
+    }else{
+      sellerTransferButton.onclick=()=>{
+        const entered=prompt('Enter the BUYER / NEW OWNER Gmail for this CoinTab license:');
+        if(entered===null)return;
+        const newEmail=String(entered||'').trim().toLowerCase();
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)){
+          toast('Enter a valid Gmail/email address.',true);
+          return;
+        }
+        const warning=
+          'TRANSFER LICENSE AS SELLER?\n\n'+
+          'Tablet: '+String(t.device||'TABLET')+'\n'+
+          'License: '+sellerLicense+'\n'+
+          'Current location: '+String(tabletLocation(t)||'UNASSIGNED')+'\n'+
+          'New owner: '+newEmail+'\n\n'+
+          'This keeps THIS SAME PHYSICAL TABLET activated and transfers its dashboard, settings, sales ownership and license to the new owner.\n\n'+
+          'After transfer, this tablet will disappear from the seller dashboard and appear on the new owner dashboard.\n\n'+
+          'Press OK only if the tablet has been sold/transferred to this Gmail.';
+        if(!confirm(warning))return;
+        busy(sellerTransferButton,async()=>{
+          await CoinTabApi.transfer(sellerLicense,newEmail,true);
+          toast('Seller transfer completed. License and tablet ownership moved to '+newEmail+'.');
+          closeModal();
+          await Promise.allSettled([loadLicenses(),refresh()]);
+        }).catch(error=>toast(error?.message||'Seller transfer failed.',true));
+      };
+    }
+  }
   $('#m-app-uninstall').onclick=()=>tabletAppActionModal(id,'UNINSTALL_APPS');
   $('#m-reload').onclick=()=>busy($('#m-reload'),async()=>{await refresh();toast('Tablet data refreshed');closeModal();settingsModal(id);});
   $('#m-save').onclick=()=>busy($('#m-save'),async()=>{

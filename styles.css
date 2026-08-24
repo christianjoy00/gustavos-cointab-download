@@ -993,3 +993,27 @@ input,select,textarea{font-family:Arial,Helvetica,sans-serif!important;font-size
 .removed-tablet-row small{display:block;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
 .removed-tablet-row button{min-width:110px}
 @media(max-width:650px){.removed-tablets-head,.removed-tablet-row{align-items:stretch;flex-direction:column}.removed-tablet-row button{width:100%}}
+
+
+/* Seller transfer inside Tablet Admin Settings */
+.license-seller-transfer{
+  margin-top:14px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.license-seller-transfer button{
+  width:auto;
+  min-width:260px;
+  background:#f97316;
+  border-color:#fb923c;
+  font-weight:800;
+}
+.license-seller-transfer button:hover{filter:brightness(1.08)}
+.license-seller-transfer button:disabled{opacity:.45;cursor:not-allowed}
+.license-seller-transfer small{
+  color:#9fc7ef;
+  line-height:1.35;
+  flex:1 1 280px;
+}
