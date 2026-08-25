@@ -1,0 +1,13 @@
+GUSTAVO'S COINTAB DASHBOARD - INO STYLE REMAINING TIME
+
+Behavior:
+- Tablet/INO heartbeat value is the authoritative starting value.
+- Standalone / Centralized / Smart timed modes count DOWN every second.
+- Every new tablet heartbeat re-synchronizes the dashboard to the real INO value.
+- Direct USB Charger Only counts RUNNING MINUTES upward.
+- No active time = time section is completely hidden.
+- Existing Seller Transfer remains included.
+
+Important:
+The dashboard does not connect directly to the ESP8266 private IP.
+The tablet must forward the INO remainingSeconds in its dashboard heartbeat.

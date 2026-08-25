@@ -236,26 +236,48 @@ function tabletLocation(t){
   return 'UNASSIGNED';
 }
 function tabletPaidTimeHtml(t){
-  const seconds=Math.max(0,Number(t?.remainingSeconds||0));
+  // The tablet heartbeat carries the same time value it receives from the INO.
+  // lastSeen is used only to animate the dashboard between heartbeats.
+  let seconds=Math.max(0,Number(t?.remainingSeconds||0));
   if(!Number.isFinite(seconds)||seconds<=0)return '';
 
   const rawMode=String(t?.mode??'').trim();
   const modeLabel=String(mode(t?.mode)||'').toUpperCase();
   const direct=rawMode==='4'||modeLabel.includes('DIRECT USB CHARGER');
 
+  // How many seconds have passed since the server received this tablet heartbeat?
+  const seenMs=tabletSeenMs(t);
+  const elapsed=(t?.online&&seenMs>0)
+    ? Math.max(0,Math.floor((Date.now()-seenMs)/1000))
+    : 0;
+
   if(direct){
-    // Direct Charger mode is easier for the owner to read as remaining minutes.
-    // Use ceiling so an active partial minute never disappears early.
-    const minutes=Math.max(1,Math.ceil(seconds/60));
-    return `<div class="tablet-paid-time direct"><small>MINUTES LEFT</small><b>${minutes} MIN</b></div>`;
+    // Direct Charger has no INO countdown. The launcher reports running session
+    // seconds and the dashboard continues counting upward between heartbeats.
+    seconds+=elapsed;
+    const minutes=Math.floor(seconds/60);
+    if(minutes<=0)return '';
+    return `<div class="tablet-paid-time direct">
+      <small>RUNNING MINUTES</small>
+      <b>${minutes} MIN</b>
+    </div>`;
   }
 
-  const whole=Math.max(0,Math.floor(seconds));
+  // INO / Standalone / Smart Charging modes:
+  // Count down from the last controller value exactly like the INO dashboard.
+  seconds=Math.max(0,seconds-elapsed);
+  if(seconds<=0)return '';
+
+  const whole=Math.floor(seconds);
   const h=Math.floor(whole/3600);
   const m=Math.floor((whole%3600)/60);
   const s=whole%60;
   const clock=[h,m,s].map(v=>String(v).padStart(2,'0')).join(':');
-  return `<div class="tablet-paid-time"><small>TIME LEFT</small><b>${clock}</b></div>`;
+
+  return `<div class="tablet-paid-time">
+    <small>TIME LEFT</small>
+    <b>${clock}</b>
+  </div>`;
 }
 
 function tabletCard(t){
