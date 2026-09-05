@@ -1046,3 +1046,5 @@ input,select,textarea{font-family:Arial,Helvetica,sans-serif!important;font-size
 .tablet-paid-time.direct b{
   font-size:19px;
 }
+
+.preview-stale{height:100%;min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:6px;padding:20px;box-sizing:border-box;background:#050b14;color:#f6c453;font-weight:800;letter-spacing:.4px}.preview-stale small{font-weight:500;color:#9fb0c7}

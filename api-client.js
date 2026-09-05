@@ -43,7 +43,7 @@ const CoinTabApi=(()=>{
     health:()=>raw('/health',{},false),
     login:async(email,pin)=>{const data=await raw('/auth/login',{email,pin},false);saveSession(data);return data;},
     access:async(access)=>{const data=await raw('/auth/access',{access},false);saveSession(data);return data;},
-    summary:()=>raw('/dashboard/summary'),profile:()=>raw('/account/profile'),
+    summary:()=>raw('/dashboard/summary'),previews:()=>raw('/dashboard/previews'),profile:()=>raw('/account/profile'),
     licenses:()=>raw('/licenses/list'),licenseHistory:()=>raw('/licenses/history'),
     release:(license,installId='')=>raw('/licenses/release',{license,installId}),
     revoke:license=>raw('/licenses/revoke',{license}),restore:license=>raw('/licenses/restore',{license}),

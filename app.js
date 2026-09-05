@@ -281,12 +281,13 @@ function tabletPaidTimeHtml(t){
 }
 
 function tabletCard(t){
-  const preview=t.preview?`<img src="${esc(t.preview)}" alt="${esc(t.device)} preview">`:'REMOTE SCREEN PREVIEW<br><small>Waiting for the next secure snapshot</small>';
+  const previewFresh=!!t.preview&&tabletSeenMs({lastSeen:t.previewAt})>0&&(Date.now()-tabletSeenMs({lastSeen:t.previewAt})<=15000);
+  const preview=previewFresh?`<img src="${esc(String(t.preview).startsWith('data:')?t.preview:String(t.preview)+(String(t.preview).includes('?')?'&':'?')+'t='+Date.now())}" alt="${esc(t.device)} live preview">`:(t.preview?`<div class="preview-stale">LIVE PREVIEW STALE<br><small>Last frame: ${esc(ago(t.previewAt))}</small><br><small>Waiting for a fresh secure snapshot</small></div>`:'REMOTE SCREEN PREVIEW<br><small>Waiting for the next secure snapshot</small>');
   const launcher=launcherStatus(t);
   const battery=Math.max(0,Math.min(100,Number(t.battery||0)));
   const batteryClass=battery<=50?'battery-low':'battery-good';
   const totalApps=Array.isArray(t.apps)?t.apps.length:0;
-  return`<article class="tablet-card" data-tablet="${t.id}"><button class="tablet-remove" data-remove-tablet="${t.id}" type="button" title="Remove tablet" aria-label="Remove ${esc(t.device)}">×</button><div class="preview" data-preview="${t.id}">${preview}</div><div class="tablet-body"><div class="tablet-head"><h3>${esc(t.device)}</h3><span class="status ${t.online?'online':'offline'}">${t.online?'ONLINE':'OFFLINE'}</span></div><div class="tablet-meta">${esc(mode(t.mode))}<br>Battery: <span class="battery-percent ${batteryClass}">${battery}%</span> · Last seen: ${esc(ago(t.lastSeen))}<br><span class="preview-apps-row"><span>Preview: ${esc(ago(t.previewAt))}</span><span class="card-app-count">Total apps: ${totalApps}</span></span><br><span class="launcher-version ${launcher.className}">${esc(launcher.label)}</span></div>${tabletPaidTimeHtml(t)}<div class="sales"><div class="sale"><small>TODAY</small>${money(t.sales?.today)}</div><div class="sale"><small>THIS WEEK</small>${money(t.sales?.week)}</div><div class="sale"><small>THIS MONTH</small>${money(t.sales?.month)}</div><div class="sale"><small>ALL-TIME</small>${money(t.sales?.allTime)}</div></div><div class="tablet-actions"><button data-remote="${t.id}">REMOTE CONTROL</button><button data-settings="${t.id}" class="secondary">ADMIN SETTINGS</button></div></div></article>`;}
+  return`<article class="tablet-card" data-tablet="${t.id}"><button class="tablet-remove" data-remove-tablet="${t.id}" type="button" title="Remove tablet" aria-label="Remove ${esc(t.device)}">×</button><div class="preview" data-preview="${t.id}">${preview}</div><div class="tablet-body"><div class="tablet-head"><h3>${esc(t.device)}</h3><span class="status ${t.online?'online':'offline'}">${t.online?'ONLINE':'OFFLINE'}</span></div><div class="tablet-meta">${esc(mode(t.mode))}<br>Battery: <span class="battery-percent ${batteryClass}">${battery}%</span> · Last seen: ${esc(ago(t.lastSeen))}<br><span class="preview-apps-row"><span>Preview: ${previewFresh?'LIVE':'STALE — '+ago(t.previewAt)}</span><span class="card-app-count">Total apps: ${totalApps}</span></span><br><span class="launcher-version ${launcher.className}">${esc(launcher.label)}</span></div>${tabletPaidTimeHtml(t)}<div class="sales"><div class="sale"><small>TODAY</small>${money(t.sales?.today)}</div><div class="sale"><small>THIS WEEK</small>${money(t.sales?.week)}</div><div class="sale"><small>THIS MONTH</small>${money(t.sales?.month)}</div><div class="sale"><small>ALL-TIME</small>${money(t.sales?.allTime)}</div></div><div class="tablet-actions"><button data-remote="${t.id}">REMOTE CONTROL</button><button data-settings="${t.id}" class="secondary">ADMIN SETTINGS</button></div></div></article>`;}
 
 const HIDDEN_TABLETS_STORAGE_KEY='gustavosCointabHiddenTabletsV2';
 const OLD_HIDDEN_TABLETS_STORAGE_KEY='gustavosCointabHiddenTabletsV1';
@@ -429,7 +430,12 @@ async function refresh(){
   if(dashboardRefreshInFlight)return;
   dashboardRefreshInFlight=true;
   try{
-    const data=await CoinTabApi.summary();
+    const [summaryResult,previewResult]=await Promise.allSettled([CoinTabApi.summary(),CoinTabApi.previews()]);
+    if(summaryResult.status!=='fulfilled')throw summaryResult.reason;
+    const data=summaryResult.value||{};
+    const previews=previewResult.status==='fulfilled'&&Array.isArray(previewResult.value?.previews)?previewResult.value.previews:[];
+    const byId=new Map(previews.map(p=>[Number(p.id),p]));
+    data.tablets=(Array.isArray(data.tablets)?data.tablets:[]).map(t=>{const p=byId.get(Number(t.id));return p?({...t,preview:p.preview,previewMime:p.previewMime,previewAt:p.previewAt}):t;});
     renderDashboard(data);
     dashboardLastSuccess=Date.now();
     $('#server-pill').className=$('#online-pill').className='pill good';
