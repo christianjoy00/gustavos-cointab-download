@@ -1,0 +1,14 @@
+GUSTAVO'S COINTAB DASHBOARD v6.0.4p
+LOCATION-WIDE UPDATE BUTTONS
+
+CHANGES
+- Every location header now shows UPDATE ALL APPS and UPDATE ALL LAUNCHERS beside the tablet count.
+- UPDATE ALL APPS queues UPDATE_APPS with all=true for every tablet at that location.
+- UPDATE ALL LAUNCHERS queues UPDATE_LAUNCHER for every tablet at that location.
+- These controls appear automatically for every dashboard location.
+- Tablet Admin Settings no longer shows UPDATE APPS.
+- Tablet Admin Settings still keeps UNINSTALL APPS and UPDATE LAUNCHER.
+- Existing searchable Admin Settings app deployment remains unchanged.
+
+DEPLOY
+Upload/replace app.js and styles.css, or upload all files in this ZIP to the dashboard host.

@@ -1,0 +1,8 @@
+TABLET AUTO-RESTORE FIX
+
+- Remove/X hides a tablet from the dashboard only.
+- License and install ID remain assigned.
+- Hidden state records the tablet lastSeen value at removal.
+- A new heartbeat/registration with a newer lastSeen automatically restores the tablet.
+- Old V1 permanent hidden-list entries are discarded so previously stuck tablets return.
+- Manual RESTORE remains available in REMOVED TABLETS.

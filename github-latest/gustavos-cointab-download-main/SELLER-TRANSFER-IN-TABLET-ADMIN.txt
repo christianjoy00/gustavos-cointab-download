@@ -1,0 +1,12 @@
+GUSTAVO'S COINTAB DASHBOARD - SELLER TRANSFER
+
+Added to each Tablet Admin Settings > Tablet License section:
+- TRANSFER LICENSE AS SELLER button
+- Prompts for buyer/new owner Gmail
+- Shows a full confirmation with tablet, license, location and destination Gmail
+- Uses the existing /licenses/seller-transfer API
+- Keeps the same physical tablet activated
+- Transfers license, tablet/dashboard ownership, settings/sales ownership according to the fixed API
+- After success the seller dashboard refreshes and the tablet moves to the new owner
+
+No server API files are changed by this dashboard package.

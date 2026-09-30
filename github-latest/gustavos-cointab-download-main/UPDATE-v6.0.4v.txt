@@ -1,0 +1,9 @@
+Gustavo's Cointab Dashboard v6.0.4v
+
+Mobile centering fix:
+- GUSTAVO'S / COINTAB centered.
+- MONITORING CONTROL CENTER centered.
+- Monitoring Dashboard centered.
+- All registered locations and tablets centered.
+- Desktop layout remains unchanged.
+- Preserves v6.0.4u app-size and responsive fixes.
