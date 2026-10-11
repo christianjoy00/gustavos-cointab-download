@@ -1,8 +1,0 @@
-Gustavo's Cointab Dashboard v6.0.4r
-ALPHABETICAL LOCATION ORDER FIX
-
-- Dashboard location sections are now sorted A-Z.
-- Sorting is case-insensitive.
-- Natural numeric sorting is enabled (for example: Shop 2 before Shop 10).
-- Admin location dropdowns use the same alphabetical order.
-- Existing v6.0.4q location persistence/assignment behavior is preserved.

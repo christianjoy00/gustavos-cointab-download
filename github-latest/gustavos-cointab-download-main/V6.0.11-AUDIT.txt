@@ -1,3 +1,0 @@
-[PASS] clean matching design
-[PASS] account theme sync
-[PASS] remote appearance controls preserved

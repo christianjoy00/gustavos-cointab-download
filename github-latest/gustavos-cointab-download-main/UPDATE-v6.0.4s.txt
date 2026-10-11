@@ -1,9 +1,0 @@
-Gustavo's Cointab Dashboard v6.0.4s
-1-SECOND PREVIEW + LOCATION APP SYNC
-
-- Dashboard refreshes every 1 second while the browser tab is visible.
-- Adds SYNC LOCATION APPS beside UPDATE ALL APPS and UPDATE ALL LAUNCHERS.
-- Reference tablet = tablet in the location with the largest uploaded app list.
-- Each other tablet receives only packages missing from that reference list.
-- Protected/system Android packages are ignored.
-- Existing alphabetical location ordering and location-assignment fixes are preserved.
