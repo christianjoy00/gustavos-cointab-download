@@ -1,5 +1,0 @@
-[PASS] Preview opens remote
-[PASS] Click sends TAP
-[PASS] Drag sends SWIPE
-[PASS] 1-second remote refresh
-[PASS] Latest launcher V6.0.8

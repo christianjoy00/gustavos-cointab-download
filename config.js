@@ -1,9 +1,9 @@
-/* CoinTab cPanel dashboard configuration. */
+/* GitHub Pages config. API must allow this GitHub Pages origin in CORS. No secrets here. */
 (() => {
   window.CointabApiConfig = {
-    baseUrl: 'https://cointab.gustavoselectronics.com/api/v1',
-    proxyUrl: new URL('api-proxy.php', location.href).href,
+    baseUrl: 'https://api.rentaride.top/api/v1',
+    proxyUrl: '',
     requestTimeoutMs: 25000,
-    latestLauncherVersion: 'V6.0.44'
+    latestLauncherVersion: 'V6.0.46'
   };
 })();

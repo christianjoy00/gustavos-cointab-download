@@ -1,7 +1,0 @@
-Gustavo's Cointab Dashboard v6.0.4q
-
-LOCATION ASSIGNMENT REPAIR
-- Stops blank/legacy location values from forcing a tablet into UNASSIGNED when an assigned location is available.
-- Uses tablet location first, then license location, then reported settings as safe fallbacks.
-- Keeps location-wide UPDATE ALL APPS / UPDATE ALL LAUNCHERS controls.
-- Requires the paired API v6.2.2 fix for permanent protection against blank heartbeat overwrites.

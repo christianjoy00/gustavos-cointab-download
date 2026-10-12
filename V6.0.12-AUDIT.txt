@@ -1,3 +1,0 @@
-[PASS] 96/80 center
-[PASS] font control
-[PASS] shared brand settings

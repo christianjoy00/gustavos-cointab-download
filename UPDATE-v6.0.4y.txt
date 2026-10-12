@@ -1,9 +1,0 @@
-Gustavo's Cointab Dashboard v6.0.4y
-
-TABLET CARD APP COUNT + BATTERY COLOR
-
-- Shows TOTAL APPS beside Preview on every tablet card.
-- Count comes from the tablet's reported installed app list.
-- Battery 0% through 50% = RED.
-- Battery 51% through 100% = GREEN.
-- Preserves v6.0.4x compact mobile header and all previous dashboard features.
