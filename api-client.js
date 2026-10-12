@@ -42,6 +42,7 @@ const CoinTabApi=(()=>{
     base,proxy,hasSession:()=>!!token,logout,
     health:()=>raw('/health',{},false),
     login:async(email,pin)=>{const data=await raw('/auth/login',{email,pin},false);saveSession(data);return data;},
+    verifyPin:async pin=>{const profile=await raw('/account/profile');const login=await raw('/auth/login',{email:profile.email,pin},false);const session=login.session||login;const temporaryToken=String(session.token||session.accessToken||'');if(!temporaryToken)throw new Error('PIN could not be verified.');const response=await fetch(endpoint('/auth/logout'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+temporaryToken},body:'{}'});if(!response.ok)throw new Error('PIN was accepted but its temporary verification session could not be closed. Check the dashboard connection and try again.');return{verified:true};},
     access:async(access)=>{const data=await raw('/auth/access',{access},false);saveSession(data);return data;},
     summary:()=>raw('/dashboard/summary'),previews:()=>raw('/dashboard/previews'),profile:()=>raw('/account/profile'),
     licenses:()=>raw('/licenses/list'),licenseHistory:()=>raw('/licenses/history'),
