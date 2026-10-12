@@ -315,12 +315,11 @@ function saveHiddenTabletKeys(keys){
   saveHiddenTabletMap(next);
 }
 function removedTabletRow(t){
-  return `<div class="removed-tablet-row"><div><b>${esc(t.device||'TABLET')}</b><small>${esc(tabletLocation(t))} · License: ${esc(t.licenseKey||'NOT REPORTED')}</small></div><button type="button" class="secondary" data-restore-tablet="${esc(tabletHideKey(t))}">RESTORE</button><button type="button" class="danger" data-forget-tablet="${esc(tabletHideKey(t))}">REMOVE PERMANENTLY</button></div>`;
+  return `<div class="removed-tablet-row"><div><b>${esc(t.device||'TABLET')}</b><small>${esc(tabletLocation(t))} · License: ${esc(t.licenseKey||'NOT REPORTED')}</small></div><button type="button" class="secondary" data-restore-tablet="${esc(tabletHideKey(t))}">RESTORE</button></div>`;
 }
 function removedTabletsPanel(){
-  const restorable=state.hiddenTablets.filter(t=>!hiddenTabletMap()[tabletHideKey(t)]?.permanent);
-  if(!restorable.length)return '';
-  return `<section class="removed-tablets-panel"><div class="removed-tablets-head"><div><h2>REMOVED TABLETS</h2><p>Hidden from this dashboard only. Licenses remain assigned.</p></div><span>${restorable.length} HIDDEN</span></div><div class="removed-tablets-list">${restorable.sort(tabletNaturalCompare).map(removedTabletRow).join('')}</div></section>`;
+  if(!state.hiddenTablets.length)return '';
+  return `<section class="removed-tablets-panel"><div class="removed-tablets-head"><div><h2>REMOVED TABLETS</h2><p>Hidden from this dashboard only. Licenses remain assigned.</p></div><span>${state.hiddenTablets.length} HIDDEN</span></div><div class="removed-tablets-list">${state.hiddenTablets.sort(tabletNaturalCompare).map(removedTabletRow).join('')}</div></section>`;
 }
 function bindRemovedTabletButtons(){
   $$('[data-restore-tablet]').forEach(button=>button.onclick=async()=>{
@@ -330,23 +329,6 @@ function bindRemovedTabletButtons(){
     if(!confirm(`Restore ${tablet.device} to the Monitoring Dashboard?`))return;
     const map=hiddenTabletMap();delete map[key];saveHiddenTabletMap(map);
     toast(`${tablet.device} restored to the dashboard.`);await refresh();
-  });
-  $$('[data-forget-tablet]').forEach(button=>button.onclick=async()=>{
-    const key=String(button.dataset.forgetTablet||'');
-    const tablet=state.hiddenTablets.find(t=>tabletHideKey(t)===key);
-    if(!tablet)return;
-    if(!confirm(`Permanently hide ${tablet.device} from this dashboard? The license and tablet data on the server will remain unchanged. This browser will not offer Restore.`))return;
-    modal(`<div class="admin-dialog-head"><div><h2>CONFIRM ADMINISTRATOR PIN</h2><p>Enter the PIN to permanently hide ${esc(tablet.device)} in this browser.</p></div></div><section class="admin-section"><label>Administrator PIN<input id="forget-tablet-pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="12"></label></section><div class="admin-action-bar"><button id="forget-tablet-cancel" class="secondary">CANCEL</button><button id="forget-tablet-confirm" class="danger">REMOVE PERMANENTLY</button></div>`);
-    $('#forget-tablet-cancel').onclick=closeModal;
-    $('#forget-tablet-confirm').onclick=()=>busy($('#forget-tablet-confirm'),async()=>{
-      const pin=$('#forget-tablet-pin').value.trim();
-      if(!pin)throw new Error('Enter the administrator PIN.');
-      await CoinTabApi.verifyPin(pin);
-      const map=hiddenTabletMap();
-      map[key]={...(map[key]||{}),permanent:true,hiddenAt:Date.now(),seenAt:tabletSeenMs(tablet),seenRaw:String(tablet.lastSeen||''),wasOnline:!!tablet.online};
-      saveHiddenTabletMap(map);
-      toast(`${tablet.device} permanently hidden in this browser.`);closeModal();await refresh();
-    });
   });
 }
 const accountThemePalettes=[
@@ -393,7 +375,7 @@ function renderDashboard(data){
     const rawHeartbeatChanged = !!rawSeen && !!previousRaw && rawSeen!==previousRaw;
     const legacyHiddenEntryOnline = !previousRaw && !!t.online && Date.now()-hiddenAt>3000;
 
-    if(!entry.permanent&&(parsedHeartbeatAdvanced || rawHeartbeatChanged || legacyHiddenEntryOnline)){
+    if(parsedHeartbeatAdvanced || rawHeartbeatChanged || legacyHiddenEntryOnline){
       delete hiddenMap[key];
       hiddenChanged=true;
       toast(`${t.device||'Tablet'} is reporting again and was restored to the dashboard.`);
@@ -434,16 +416,14 @@ function renderDashboard(data){
   bindRemovedTabletButtons();
   bindLocationUpdateButtons();
 }
-function optionList(locations,allLabel='ALL LOCATIONS'){
-  return '<option value="" selected disabled>SELECT A LOCATION</option>'+`<option value="${esc(allLabel)}">${esc(allLabel)}</option>`+locations.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
-}
+function optionList(locations,allLabel='ALL LOCATIONS'){return '<option>'+allLabel+'</option>'+locations.map(x=>`<option>${esc(x)}</option>`).join('');}
 function tabletOptions(location,allLabel='ALL TABLETS IN SELECTED LOCATION'){const tabs=state.tablets.filter(x=>!location||location==='ALL LOCATIONS'||tabletLocation(x)===location).sort(tabletNaturalCompare);return '<option value="">'+allLabel+'</option>'+tabs.map(x=>`<option value="${x.id}">${esc(x.device)}</option>`).join('');}
 function fillTargets(){const locations=[...new Set(state.tablets.map(tabletLocation))].sort((a,b)=>
   String(a).localeCompare(String(b), undefined, {sensitivity:'base', numeric:true})
-);const all=optionList(locations);['resetSalesLocation','bulkUpdateLocation','bulkThemeLocation','bulkNetworkLocation','bulkProtectedGmailLocation','ownInstallLocation','allGamesLocation','fiftyGamesLocation','policyLocation','updateLocation','uninstallLocation','stopLocation'].forEach(id=>{const e=$('#'+id);if(e){const previous=e.value;e.innerHTML=all;if(previous&&[...e.options].some(option=>option.value===previous))e.value=previous;else e.value='';}});const sourceOptions=[...state.tablets].sort(tabletNaturalCompare).map(x=>`<option value="${x.id}">${esc(tabletLocation(x)+' / '+x.device)}</option>`).join('');
+);const all=optionList(locations);['resetSalesLocation','bulkUpdateLocation','bulkThemeLocation','bulkNetworkLocation','bulkProtectedGmailLocation','ownInstallLocation','allGamesLocation','updateLocation','uninstallLocation','stopLocation'].forEach(id=>{const e=$('#'+id);if(e)e.innerHTML=all;});const sourceOptions=[...state.tablets].sort(tabletNaturalCompare).map(x=>`<option value="${x.id}">${esc(tabletLocation(x)+' / '+x.device)}</option>`).join('');
 ['source-tablet','update-source-tablet','uninstall-source-tablet'].forEach(id=>{const source=$('#'+id);if(source)source.innerHTML=sourceOptions;});
 refreshDeployTabletOptions();}
-function refreshDeployTabletOptions(){[['ownInstallLocation','ownInstallTablet'],['allGamesLocation','allGamesTablet'],['fiftyGamesLocation','fiftyGamesTablet'],['updateLocation','updateTablet'],['uninstallLocation','uninstallTablet']].forEach(([l,t])=>{const le=$('#'+l),te=$('#'+t);if(le&&te)te.innerHTML=tabletOptions(le.value);});}
+function refreshDeployTabletOptions(){[['ownInstallLocation','ownInstallTablet'],['allGamesLocation','allGamesTablet'],['updateLocation','updateTablet'],['uninstallLocation','uninstallTablet']].forEach(([l,t])=>{const le=$('#'+l),te=$('#'+t);if(le&&te)te.innerHTML=tabletOptions(le.value);});}
 let dashboardRefreshInFlight=false;
 let dashboardLastSuccess=0;
 async function refresh(){
@@ -575,7 +555,6 @@ function settingsModal(id){
   </div></section>
   <section class="admin-section"><h3>Automatic Maintenance</h3><p>Automatic updates only run after the tablet has remained on the CoinTab lock screen for the selected number of hours. Restart also waits for the lock screen.</p><div class="form-grid admin-grid">
     <label class="check"><input id="m-auto-update" type="checkbox" ${s.autoUpdateEnabled?'checked':''}> Automatically Update Launcher From GitHub</label>
-    <label class="check"><input id="m-auto-update-apps" type="checkbox" ${s.autoUpdateAppsEnabled!==false?'checked':''}> Automatically Update Installed Apps From Google Play</label>
     <label>Locked Hours Before Update<input id="m-auto-update-hours" type="number" min="1" max="168" value="${Number(s.autoUpdateLockHours??3)}"></label>
     <label>Update Hour (-1 any time, 0-23 PH)<input id="m-auto-update-hour" type="number" min="-1" max="23" value="${Number(s.autoUpdateHour??-1)}"></label>
     <label class="check"><input id="m-auto-restart" type="checkbox" ${s.autoRestartEnabled?'checked':''}> Automatic Daily Restart (Lock Screen Only)</label>
@@ -643,7 +622,7 @@ function settingsModal(id){
   $('#m-app-uninstall').onclick=()=>tabletAppActionModal(id,'UNINSTALL_APPS');
   $('#m-reload').onclick=()=>busy($('#m-reload'),async()=>{await refresh();toast('Tablet data refreshed');closeModal();settingsModal(id);});
   $('#m-save').onclick=()=>busy($('#m-save'),async()=>{
-    const settings={mode:Number($('#m-mode').value),url:$('#m-url').value.trim(),locationName:$('#m-location').value.trim(),deviceName:$('#m-device').value.trim().toUpperCase(),protectedGoogleAccount:$('#m-protected-email').value.trim().toLowerCase(),chargerMinutesPerPeso:Number($('#m-minutes').value),chargerPeso:Number($('#m-peso').value),cleanup:Number($('#m-cleanup').value),clearFacebookAfterRental:$('#m-clear-facebook').checked,clearGoogleAccountsAfterRental:$('#m-clear-google').checked,screenMonitorRemoteInterval:Number($('#m-preview').value),uiTheme:Number($('#m-theme').value),launcherBrandName:$('#m-brand').value.trim(),lockBrandSubtitle:$('#m-lock-subtitle').value.trim(),lockBrandAnimationEnabled:$('#m-lock-animation').checked,lockBrandAnimationStyle:$('#m-lock-style').value,lockBrandFontStyle:$('#m-lock-font').value,lockBrandTitleSize:Number($('#m-lock-title-size').value),lockBrandSubtitleSize:Number($('#m-lock-subtitle-size').value),lockBrandTopDp:Number($('#m-lock-top').value),lockBrandAnimationSpeed:Number($('#m-lock-speed').value),autoUpdateEnabled:$('#m-auto-update').checked,autoUpdateAppsEnabled:$('#m-auto-update-apps').checked,autoUpdateLockHours:Number($('#m-auto-update-hours').value),autoUpdateHour:Number($('#m-auto-update-hour').value),autoRestartEnabled:$('#m-auto-restart').checked,autoRestartHour:Number($('#m-auto-restart-hour').value),categoryMode:$('#m-categories').checked,dailyThemeRotation:$('#m-daily-theme').checked,media:$('#m-media').value,timeWidget:$('#m-widget').checked,screenMonitoringEnabled:$('#m-monitor').checked,voiceCoinEnabled:$('#m-voice-coin').checked,voiceFiveEnabled:$('#m-voice-five').checked,voiceOneEnabled:$('#m-voice-one').checked,voiceUpEnabled:$('#m-voice-up').checked,blockAdultSites:$('#m-adult').checked,blockAdDomains:$('#m-ads').checked,vpnControlsEnabled:$('#m-vpn').checked};
+    const settings={mode:Number($('#m-mode').value),url:$('#m-url').value.trim(),locationName:$('#m-location').value.trim(),deviceName:$('#m-device').value.trim().toUpperCase(),protectedGoogleAccount:$('#m-protected-email').value.trim().toLowerCase(),chargerMinutesPerPeso:Number($('#m-minutes').value),chargerPeso:Number($('#m-peso').value),cleanup:Number($('#m-cleanup').value),clearFacebookAfterRental:$('#m-clear-facebook').checked,clearGoogleAccountsAfterRental:$('#m-clear-google').checked,screenMonitorRemoteInterval:Number($('#m-preview').value),uiTheme:Number($('#m-theme').value),launcherBrandName:$('#m-brand').value.trim(),lockBrandSubtitle:$('#m-lock-subtitle').value.trim(),lockBrandAnimationEnabled:$('#m-lock-animation').checked,lockBrandAnimationStyle:$('#m-lock-style').value,lockBrandFontStyle:$('#m-lock-font').value,lockBrandTitleSize:Number($('#m-lock-title-size').value),lockBrandSubtitleSize:Number($('#m-lock-subtitle-size').value),lockBrandTopDp:Number($('#m-lock-top').value),lockBrandAnimationSpeed:Number($('#m-lock-speed').value),autoUpdateEnabled:$('#m-auto-update').checked,autoUpdateLockHours:Number($('#m-auto-update-hours').value),autoUpdateHour:Number($('#m-auto-update-hour').value),autoRestartEnabled:$('#m-auto-restart').checked,autoRestartHour:Number($('#m-auto-restart-hour').value),categoryMode:$('#m-categories').checked,dailyThemeRotation:$('#m-daily-theme').checked,media:$('#m-media').value,timeWidget:$('#m-widget').checked,screenMonitoringEnabled:$('#m-monitor').checked,voiceCoinEnabled:$('#m-voice-coin').checked,voiceFiveEnabled:$('#m-voice-five').checked,voiceOneEnabled:$('#m-voice-one').checked,voiceUpEnabled:$('#m-voice-up').checked,blockAdultSites:$('#m-adult').checked,blockAdDomains:$('#m-ads').checked,vpnControlsEnabled:$('#m-vpn').checked};
     const pin=$('#m-pin').value.trim();if(pin)settings.newAdminPin=pin;
     const appPolicies=[...document.querySelectorAll('#m-app-policies .policy-row')].map(row=>{const a=apps[Number(row.dataset.appIndex)]||{};return{package:a.package||'',label:a.label||a.name||'',displayed:row.querySelector('.p-display').checked,requirePin:row.querySelector('.p-pin').checked,clearData:row.querySelector('.p-clear').checked,protected:!!a.protected};});
     await CoinTabApi.command('APPLY_SETTINGS',{tabletId:id},{settings,apps:appPolicies});toast('Full tablet settings queued');closeModal();
@@ -825,8 +804,7 @@ function tabletAppActionModal(id,action){
 }
 
 function configMap(rows){const result={};(rows||[]).forEach(r=>{if(r.scope==='ACCOUNT'||r.scope==='GLOBAL')result[r.config_key]=r.value;});return result;}
-async function syncV46PolicyTargets(){for(const [source,dest] of [['allGamesLocation','fiftyGamesLocation'],['allGamesTablet','fiftyGamesTablet'],['allGamesLocation','policyLocation']]){const a=$('#'+source),b=$('#'+dest);if(a&&b){const value=b.value;b.innerHTML=a.innerHTML;if(value)b.value=value;}}}
-async function loadDashboardAdmin(){fillTargets();syncV46PolicyTargets();try{const data=await CoinTabApi.configuration(),m=configMap(data.configuration);if(m.requireLogin!==undefined)$('#requireLogin').checked=!!m.requireLogin;if(m.requireAdminPin!==undefined)$('#requireAdminPin').checked=!!m.requireAdminPin;if(m.trustedDays!==undefined)$('#trustedDays').value=m.trustedDays;if(m.previewSeconds!==undefined)$('#previewSeconds').value=m.previewSeconds;if(m.liveMinutes!==undefined)$('#liveMinutes').value=m.liveMinutes;if(m.monitoringEnabled!==undefined)$('#monitoringEnabled').checked=!!m.monitoringEnabled;if(m['applicationPolicy.sameLauncherDisplay']!==undefined)$('#policySameLauncher').checked=!!m['applicationPolicy.sameLauncherDisplay'];if(m['applicationPolicy.clearAppDataSelected']!==undefined)$('#policyClearData').checked=!!m['applicationPolicy.clearAppDataSelected'];if(m['applicationPolicy.applyToNewTablets']!==undefined)$('#policyNewTablets').checked=!!m['applicationPolicy.applyToNewTablets'];}catch(e){toast('Dashboard settings loaded from current defaults: '+e.message,true);}}
+async function loadDashboardAdmin(){fillTargets();try{const data=await CoinTabApi.configuration(),m=configMap(data.configuration);if(m.requireLogin!==undefined)$('#requireLogin').checked=!!m.requireLogin;if(m.requireAdminPin!==undefined)$('#requireAdminPin').checked=!!m.requireAdminPin;if(m.trustedDays!==undefined)$('#trustedDays').value=m.trustedDays;if(m.previewSeconds!==undefined)$('#previewSeconds').value=m.previewSeconds;if(m.liveMinutes!==undefined)$('#liveMinutes').value=m.liveMinutes;if(m.monitoringEnabled!==undefined)$('#monitoringEnabled').checked=!!m.monitoringEnabled;}catch(e){toast('Dashboard settings loaded from current defaults: '+e.message,true);}}
 async function saveDashboardAdmin(button){
   await busy(button,async()=>{
     const settings={
@@ -844,7 +822,7 @@ async function saveDashboardAdmin(button){
     await refresh();
   });
 }
-function locationTarget(selectId,tabletSelectId=''){const location=$('#'+selectId)?.value||'';const tabletId=tabletSelectId?Number($('#'+tabletSelectId)?.value||0):0;if(tabletId)return{tabletId};if(!location)throw new Error('Choose a location or explicitly select ALL LOCATIONS.');return location==='ALL LOCATIONS'?{}:{location};}
+function locationTarget(selectId,tabletSelectId=''){const location=$('#'+selectId)?.value||'ALL LOCATIONS';const tabletId=tabletSelectId?Number($('#'+tabletSelectId)?.value||0):0;return tabletId?{tabletId}:location==='ALL LOCATIONS'?{}:{location};}
 function selectedPackagesFromManual(inputId){const manual=$('#'+inputId)?.value.trim();const p=[...state.selectedApps];if(manual&&!p.includes(manual))p.push(manual);if(!p.length)throw new Error('Select or enter at least one application package.');return p;}
 function showDeploy(name){$$('.deploy-pane').forEach(x=>x.classList.toggle('active',x.id==='deploy-'+name));}
 
@@ -856,7 +834,7 @@ $$('[data-deploy-tab]').forEach(b=>b.onclick=()=>{
   if(b.dataset.deployTab==='update'){const e=$('#updateManual');if(e&&e.value.includes('@'))e.value='';}
   if(b.dataset.deployTab==='uninstall'){const e=$('#uninstallManual');if(e&&e.value.includes('@'))e.value='';}
 });
-$('#reset-location-sales').onclick=()=>busy($('#reset-location-sales'),async()=>{const location=$('#resetSalesLocation').value;if(!location)throw new Error('Choose a location or explicitly select ALL LOCATIONS.');const r=await CoinTabApi.resetSales(null,location==='ALL LOCATIONS'?'':location);toast(r.message||'Reset queued');await refresh();});
+$('#reset-location-sales').onclick=()=>busy($('#reset-location-sales'),async()=>{const location=$('#resetSalesLocation').value;const r=await CoinTabApi.resetSales(null,location==='ALL LOCATIONS'?'':location);toast(r.message||'Reset queued');await refresh();});
 $('#bulk-update-launcher').onclick=()=>busy($('#bulk-update-launcher'),async()=>{await CoinTabApi.command('UPDATE_LAUNCHER',locationTarget('bulkUpdateLocation'),{});toast('Launcher update queued');});
 $('#bulk-appearance').onclick=()=>busy($('#bulk-appearance'),async()=>{await CoinTabApi.command('APPLY_SETTINGS',locationTarget('bulkThemeLocation'),{settings:{uiTheme:Number($('#bulkTheme').value),categoryMode:$('#bulkCategories').checked,dailyThemeRotation:$('#bulkDailyTheme').checked}});toast('Appearance settings queued');});
 $('#bulk-network').onclick=()=>busy($('#bulk-network'),async()=>{await CoinTabApi.command('APPLY_SETTINGS',locationTarget('bulkNetworkLocation'),{settings:{blockAdultSites:$('#bulkAdultSites').checked,blockAdDomains:$('#bulkAdDomains').checked,vpnControlsEnabled:$('#bulkShowVpn').checked}});toast('Network protection queued');});
@@ -864,9 +842,6 @@ $('#bulk-protected-gmail').onclick=()=>busy($('#bulk-protected-gmail'),async()=>
 $('#load-apps').onclick=renderSourceApps;$('#select-all').onclick=()=>{$$('[data-package]').forEach(box=>{box.checked=true;state.selectedApps.add(box.dataset.package);});};
 $('#install-apps').onclick=()=>busy($('#install-apps'),async()=>{await CoinTabApi.command('INSTALL_APPS',locationTarget('ownInstallLocation','ownInstallTablet'),{packages:selectedPackagesFromManual('package')});toast('App installation queued');});
 $('#install-all-games').onclick=()=>busy($('#install-all-games'),async()=>{await CoinTabApi.command('INSTALL_APPS',locationTarget('allGamesLocation','allGamesTablet'),{actions:{installAllGames:true},packages:[]});toast('100-game catalog installation queued');});
-syncV46PolicyTargets();
-$('#install-50-games').onclick=()=>busy($('#install-50-games'),async()=>{if(!confirm('Queue installation of the first 50 games on the selected target(s)?'))return;await CoinTabApi.command('INSTALL_APPS',locationTarget('fiftyGamesLocation','fiftyGamesTablet'),{actions:{install50Games:true},packages:[]});toast('50-game catalog request queued. Confirm the launcher supports install50Games.');});
-$('#save-application-policy').onclick=()=>busy($('#save-application-policy'),async()=>{const target=locationTarget('policyLocation');const policy={sameLauncherDisplay:$('#policySameLauncher').checked,clearAppDataSelected:$('#policyClearData').checked,applyToNewTablets:$('#policyNewTablets').checked};for(const [key,value] of Object.entries(policy)){await CoinTabApi.setConfiguration('ACCOUNT','',`applicationPolicy.${key}`,value);}await CoinTabApi.command('APPLY_SETTINGS',target,{settings:{sameLauncherDisplay:policy.sameLauncherDisplay,clearAppDataSelected:policy.clearAppDataSelected,applyToNewTablets:policy.applyToNewTablets}});toast('Application policy saved and command queued. Check tablet status for confirmation.');});
 $('#load-update-apps').onclick=()=>loadDeployAppPicker('update');
 $('#update-app-search').oninput=()=>renderDeployAppPicker('update');
 $('#update-select-all').onclick=()=>selectVisibleDeployApps('update');

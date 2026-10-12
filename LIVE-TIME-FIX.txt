@@ -1,0 +1,9 @@
+Dashboard live-time fix:
+- Direct USB Charger Only: RUNNING MINUTES, hidden until at least 1 full minute.
+- Other modes: TIME LEFT HH:MM:SS.
+- Zero/inactive is hidden completely.
+- Seller Transfer remains included.
+
+Requires:
+1) API dashboardHeartbeat telemetry patch.
+2) CoinTab launcher v6.0.37 telemetry update.

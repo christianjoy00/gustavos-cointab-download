@@ -1,0 +1,8 @@
+TABLET X / RESTORE FIX
+
+- X now hides a tablet from the dashboard only. It does NOT release the license.
+- Confirmation is required.
+- Hidden tablets appear in REMOVED TABLETS with a RESTORE button.
+- Tablet X buttons stay behind Admin Settings / modal windows.
+- Tablet Admin Settings continues to show license key, status, install ID, and location.
+- Browser cache asset version bumped.

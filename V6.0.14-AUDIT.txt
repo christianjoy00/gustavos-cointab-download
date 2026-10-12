@@ -1,0 +1,3 @@
+[PASS] 20 animation choices
+[PASS] 40 font presets
+[PASS] defaults 85/80/293/3000

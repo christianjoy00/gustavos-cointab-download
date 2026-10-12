@@ -1,0 +1,27 @@
+GUSTAVO'S COINTAB MONITORING DASHBOARD - UPDATE
+
+1. REMOVE TABLET X BUTTON
+- Each tablet card has an X button at the upper-right.
+- Clicking X asks for confirmation.
+- Confirming uses the existing /licenses/release API with the tablet's licenseKey + installId.
+- The license becomes available for reuse.
+- Because the dashboard only displays USED licenses, the released tablet disappears after refresh.
+- This does not factory-reset or erase the physical tablet.
+
+2. TABLET LICENSE IN ADMIN SETTINGS
+- Open ADMIN SETTINGS on any tablet.
+- A Tablet License section now shows:
+  * License Key
+  * License Status
+  * Install ID
+  * Location
+
+3. DOWNLOAD LATEST DASHBOARD FROM GITHUB
+- Run DOWNLOAD-LATEST-FROM-GITHUB.cmd.
+- It downloads the latest main branch into a github-latest folder.
+
+4. PUBLISH DASHBOARD TO GITHUB
+- Run UPLOAD-DASHBOARD-TO-GITHUB.cmd.
+- Requires GitHub CLI (gh) and access to christianjoy00/gustavos-cointab-download.
+- If gh is already logged in, it clones the repo, copies this dashboard, commits changes, and pushes to main.
+- GitHub Pages will deploy after the push.

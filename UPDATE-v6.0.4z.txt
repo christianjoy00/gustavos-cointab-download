@@ -1,0 +1,6 @@
+v6.0.4z
+- Last seen now displays like: Last seen: 13s
+- Preview now displays like: Preview: 13s
+- Removed the word "ago".
+- Total apps is simple inline text beside Preview, no badge.
+- Keeps battery colors and previous features.

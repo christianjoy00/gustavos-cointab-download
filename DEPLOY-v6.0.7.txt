@@ -1,0 +1,6 @@
+GUSTAVO'S COINTAB DASHBOARD v6.0.7
+
+CPANEL: upload every file to the document root of https://rentaride.top/ including api-proxy.php and .htaccess.
+GITHUB PAGES: upload index.html, styles.css, app.js, api-client.js, config.js. GitHub uses https://api.rentaride.top/api/v1 directly.
+Clear browser/site cache after replacing files.
+The API server v6.0.7 patch must also be installed so only correctly activated licenses appear.

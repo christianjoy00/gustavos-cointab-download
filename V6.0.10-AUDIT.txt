@@ -1,0 +1,4 @@
+[PASS] Pixel design
+[PASS] Usage SEEN fallback
+[PASS] Faster remote polling
+[PASS] Remote appearance/cleanup controls

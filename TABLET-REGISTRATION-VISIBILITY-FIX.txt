@@ -1,0 +1,11 @@
+GUSTAVO'S COINTAB DASHBOARD - REGISTRATION VISIBILITY FIX
+
+Changes:
+- Removed "Location and Tablet Organization" from Dashboard Admin Settings.
+- Tablet removal remains on each tablet card only.
+- Online/registered tablets are no longer hidden just because licenseKey/installId
+  metadata has not yet been joined into /dashboard/summary.
+- Hidden tablets automatically return when a new heartbeat/registration is seen.
+- Raw lastSeen values are compared as a fallback for server timestamp formats.
+- Existing license information remains shown in per-tablet Admin Settings.
+- No dashboard/ subfolder is included.
